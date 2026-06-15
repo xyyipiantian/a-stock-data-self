@@ -1,0 +1,20 @@
+{
+  "name": "codex-usage-meter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local Codex token and cost dashboard.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "start:proxy": "node proxy-server.js",
+    "dispatch:alerts": "node server.js --dispatch-alerts",
+    "scan": "node server.js --scan",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

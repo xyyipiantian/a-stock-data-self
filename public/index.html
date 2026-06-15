@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Alpha Lens 投研面板</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Rule-Driven Research Console</p>
+          <h1>Alpha Lens</h1>
+          <p class="hero-text">
+            面向 A 股单票研究的策略助手。输入代码或名称，直接看到交易计划、仓位安排、风险边界和可替代标的。
+          </p>
+          <div class="hero-pills">
+            <span>规则引擎优先</span>
+            <span>前向 PE / PEG / PE 消化</span>
+            <span>仓位剧本化执行</span>
+          </div>
+        </div>
+        <aside class="hero-aside">
+          <div class="hero-card">
+            <span class="hero-card-label">当前模式</span>
+            <strong>算法策略输出</strong>
+            <p>默认不依赖模型推理，先用既有框架给出稳定建议。</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="search-panel">
+        <div class="search-row">
+          <label class="search-field" for="stockQuery">
+            <span>股票查询</span>
+            <input id="stockQuery" type="search" placeholder="输入代码或名称，例如 600519 / 贵州茅台" autocomplete="off" />
+          </label>
+          <button id="analyzeButton" class="primary-button">生成策略</button>
+        </div>
+        <div class="search-meta">
+          <p id="statusLine">正在加载投研样本池...</p>
+          <div class="quick-picks" id="quickPicks"></div>
+        </div>
+        <div class="suggestion-list" id="suggestionList"></div>
+        <div class="auth-panel">
+          <div>
+            <p class="section-label">账户与云同步</p>
+            <strong id="authHeadline">本地模式</strong>
+            <p id="authCopy">当前还没接入云端账号。继续本地使用也可以。</p>
+          </div>
+          <div class="auth-actions" id="authActions">
+            <button class="secondary-button" id="signInGoogleButton" type="button">Google 登录</button>
+            <button class="secondary-button" id="signInGithubButton" type="button">GitHub 登录</button>
+            <button class="secondary-button" id="signOutButton" type="button" hidden>退出登录</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="alert-strip" id="alertStrip" hidden>
+        <div>
+          <p class="section-label">机会提醒</p>
+          <strong id="alertHeadline">暂无提醒</strong>
+        </div>
+        <p id="alertCopy"></p>
+      </section>
+
+      <section class="summary-grid">
+        <article class="stock-card">
+          <div class="stock-heading">
+            <div>
+              <p class="section-label">标的概览</p>
+              <h2 id="stockTitle">-</h2>
+            </div>
+            <span class="stance-badge" id="stanceBadge">待分析</span>
+          </div>
+          <div class="price-row">
+            <strong id="stockPrice">-</strong>
+            <span id="stockChange">-</span>
+          </div>
+          <p class="stock-sector" id="stockSector">-</p>
+          <div class="tag-list" id="stockTags"></div>
+        </article>
+
+        <article class="score-card">
+          <div class="section-head">
+            <p class="section-label">策略快照</p>
+            <span id="confidenceText">-</span>
+          </div>
+          <div class="score-value">
+            <strong id="totalScore">-</strong>
+            <span>/ 100</span>
+          </div>
+          <div class="signal-list" id="signalList"></div>
+        </article>
+
+        <article class="range-card">
+          <div class="section-head">
+            <p class="section-label">关键价格</p>
+            <span id="analysisMode">-</span>
+          </div>
+          <dl class="range-list">
+            <div>
+              <dt>支撑</dt>
+              <dd id="supportPrice">-</dd>
+            </div>
+            <div>
+              <dt>压力</dt>
+              <dd id="resistancePrice">-</dd>
+            </div>
+            <div>
+              <dt>策略目标区间</dt>
+              <dd id="targetRange">-</dd>
+            </div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel panel-large">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">核心判断</p>
+              <h3>交易计划</h3>
+            </div>
+          </div>
+          <div class="thesis-grid" id="thesisGrid"></div>
+          <div class="plan-list" id="planList"></div>
+        </section>
+
+        <aside class="panel panel-side">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">估值与质量</p>
+              <h3>关键指标</h3>
+            </div>
+          </div>
+          <div class="metrics-list" id="metricsList"></div>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-label">仓位剧本</p>
+            <h3>不同仓位的执行安排</h3>
+          </div>
+        </div>
+        <div class="positions-grid" id="positionsGrid"></div>
+      </section>
+
+      <section class="content-grid lower-grid">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">替代与轮动</p>
+              <h3>可跟踪标的</h3>
+            </div>
+          </div>
+          <div class="candidate-list" id="candidateList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">节奏提醒</p>
+              <h3>近期信号时间线</h3>
+            </div>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </section>
+      </section>
+
+      <section class="content-grid lower-grid">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">自选监控</p>
+              <h3>机会盯盘清单</h3>
+            </div>
+            <button class="secondary-button" id="addWatchButton">加入当前股票</button>
+          </div>
+          <div class="watch-toolbar">
+            <label class="watch-toggle">
+              <input id="monitorToggle" type="checkbox" checked />
+              <span>自动监控</span>
+            </label>
+            <span id="monitorStatus">每 60 秒扫描一次</span>
+          </div>
+          <div class="watchlist" id="watchlist"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">机会日志</p>
+              <h3>最近提醒记录</h3>
+            </div>
+          </div>
+          <div class="opportunity-log" id="opportunityLog"></div>
+        </section>
+      </section>
+
+      <section class="content-grid lower-grid">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">提醒渠道</p>
+              <h3>飞书 / 企业微信</h3>
+            </div>
+          </div>
+          <form id="channelForm" class="channel-form">
+            <label class="channel-field">
+              <span>飞书机器人 Webhook</span>
+              <input id="feishuWebhookInput" type="url" placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..." />
+            </label>
+            <label class="channel-field">
+              <span>企业微信机器人 Webhook</span>
+              <input id="wecomWebhookInput" type="url" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..." />
+            </label>
+            <div class="channel-actions">
+              <button class="primary-button compact" id="saveChannelsButton" type="submit">保存提醒渠道</button>
+              <p id="channelStatus">登录后可保存自己的飞书 / 企业微信提醒。</p>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">部署准备</p>
+              <h3>多人版上线前还差什么</h3>
+            </div>
+          </div>
+          <div class="plan-list">
+            <div class="plan-item">在 Supabase 执行 [supabase/schema.sql](/C:/Users/59110/Documents/New%20project/supabase/schema.sql)</div>
+            <div class="plan-item">配置 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`</div>
+            <div class="plan-item">开启 Google / GitHub OAuth，用户登录后自动隔离自己的自选和提醒</div>
+            <div class="plan-item">用定时任务调用 `/api/cron/dispatch`，把高优先提醒发到用户自己的机器人</div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
