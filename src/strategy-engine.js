@@ -668,6 +668,34 @@ async function buildLiveProfileFromSearchHit(best) {
   return remoteProfile;
 }
 
+async function buildLiveProfileFromCode(code) {
+  let info;
+  try {
+    info = await fetchEastmoneyStockInfo(code);
+  } catch {
+    return null;
+  }
+
+  const live = await fetchLiveQuoteWithFallback(code, info.price || 0, info.price || 0);
+  if (!live.quote) {
+    return null;
+  }
+
+  const searchHit = {
+    code,
+    name: info.name || code,
+    sector: info.industry || "A股",
+    tags: [info.industry || "A股"]
+  };
+
+  const profile = buildRemoteStockProfile(searchHit, live.quote, info);
+  profile._source = "live-quote";
+  profile._provider = live.provider;
+  profile._warning = live.warning;
+  profile._errors = live.errors;
+  return profile;
+}
+
 async function buildLiveProfileByCode(code) {
   const normalized = normalizeCode(code);
   if (!normalized) return null;
@@ -701,6 +729,9 @@ async function buildLiveProfileByCode(code) {
       _errors: live.errors
     };
   }
+
+  const direct = await buildLiveProfileFromCode(normalized);
+  if (direct) return direct;
 
   const hit = await findRemoteByCode(normalized);
   if (!hit) return null;

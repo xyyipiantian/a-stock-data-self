@@ -3,6 +3,27 @@ const { createServiceSupabase } = require("./supabase-server");
 
 const DEDUPE_MINUTES = 45;
 
+function getChinaTradingWindowState(now = new Date()) {
+  const chinaNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
+  const day = chinaNow.getDay();
+  if (day === 0 || day === 6) {
+    return { open: false, label: "周末休市" };
+  }
+
+  const minutes = chinaNow.getHours() * 60 + chinaNow.getMinutes();
+  const inMorning = minutes >= 9 * 60 + 15 && minutes <= 11 * 60 + 30;
+  const inAfternoon = minutes >= 13 * 60 && minutes <= 15 * 60;
+  if (inMorning || inAfternoon) {
+    return { open: true, label: "交易时段" };
+  }
+
+  if (minutes > 11 * 60 + 30 && minutes < 13 * 60) {
+    return { open: false, label: "午间休市" };
+  }
+
+  return { open: false, label: "非交易时段" };
+}
+
 function buildWebhookMessage(alert) {
   return [
     `${alert.name} ${alert.code} · ${alert.signal}`,
@@ -69,6 +90,17 @@ function isDedupeBlocked(previousSignalAt) {
 }
 
 async function runAlertDispatch() {
+  const market = getChinaTradingWindowState();
+  if (!market.open) {
+    return {
+      ok: true,
+      dispatched: 0,
+      skipped: 0,
+      scanned: 0,
+      message: `跳过扫描：${market.label}`
+    };
+  }
+
   const supabase = createServiceSupabase();
   if (!supabase) {
     return {

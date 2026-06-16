@@ -83,6 +83,27 @@ function cloudEnabled() {
   return Boolean(state.auth.client && state.auth.user);
 }
 
+function getChinaTradingWindowState(now = new Date()) {
+  const chinaNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
+  const day = chinaNow.getDay();
+  if (day === 0 || day === 6) {
+    return { open: false, label: "周末休市" };
+  }
+
+  const minutes = chinaNow.getHours() * 60 + chinaNow.getMinutes();
+  const inMorning = minutes >= 9 * 60 + 15 && minutes <= 11 * 60 + 30;
+  const inAfternoon = minutes >= 13 * 60 && minutes <= 15 * 60;
+  if (inMorning || inAfternoon) {
+    return { open: true, label: "交易时段" };
+  }
+
+  if (minutes > 11 * 60 + 30 && minutes < 13 * 60) {
+    return { open: false, label: "午间休市" };
+  }
+
+  return { open: false, label: "非交易时段" };
+}
+
 function persistLocalWatchlist() {
   localStorage.setItem(WATCHLIST_KEY, JSON.stringify(state.watchlist));
 }
@@ -765,6 +786,12 @@ async function pollMonitor() {
     return;
   }
 
+  const market = getChinaTradingWindowState();
+  if (!market.open) {
+    $("#monitorStatus").textContent = `暂停扫描 · ${market.label}`;
+    return;
+  }
+
   try {
     const payload = state.watchlist.map((item) => ({
       code: item.code,
@@ -799,7 +826,7 @@ function setMonitorEnabled(enabled) {
   if (enabled) {
     pollMonitor();
     state.monitorTimer = setInterval(pollMonitor, 60_000);
-    $("#monitorStatus").textContent = "每 60 秒扫描一次";
+    $("#monitorStatus").textContent = "交易时段每 60 秒扫描一次";
   } else {
     $("#monitorStatus").textContent = "自动监控已暂停";
   }
