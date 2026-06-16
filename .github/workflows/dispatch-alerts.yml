@@ -1,0 +1,27 @@
+name: Dispatch Alerts
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger production dispatch
+        env:
+          DISPATCH_URL: ${{ secrets.PROD_DISPATCH_URL }}
+          MONITOR_CRON_SECRET: ${{ secrets.MONITOR_CRON_SECRET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          URL="${DISPATCH_URL:-https://alpha-lens-taupe.vercel.app/api/cron/dispatch}"
+          if [ -n "${CRON_SECRET:-}" ]; then
+            curl -fsS -X POST "$URL" -H "Authorization: Bearer ${CRON_SECRET}"
+          elif [ -n "${MONITOR_CRON_SECRET:-}" ]; then
+            curl -fsS -X POST "$URL" -H "x-monitor-secret: ${MONITOR_CRON_SECRET}"
+          else
+            echo "Missing CRON_SECRET or MONITOR_CRON_SECRET"
+            exit 1
+          fi
