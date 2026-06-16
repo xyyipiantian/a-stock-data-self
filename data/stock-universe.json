@@ -3,7 +3,11 @@
     "code": "600519",
     "name": "贵州茅台",
     "sector": "白酒",
-    "tags": ["高端消费", "品牌壁垒", "机构抱团"],
+    "tags": [
+      "高端消费",
+      "品牌壁垒",
+      "机构抱团"
+    ],
     "price": 1642.5,
     "dayChangePct": 1.7,
     "volumeRatio": 1.24,
@@ -22,19 +26,43 @@
     "pullbackBufferPct": 4.3,
     "breakoutBufferPct": 5.8,
     "catalyst": "中报预期稳健，渠道价格体系相对稳定，回购与分红预期提升资金偏好",
-    "watchItems": ["批价走势", "中报预告", "北向持续净流入"],
-    "risks": ["消费复苏不及预期", "高位估值切换", "资金抱团松动"],
+    "watchItems": [
+      "批价走势",
+      "中报预告",
+      "北向持续净流入"
+    ],
+    "risks": [
+      "消费复苏不及预期",
+      "高位估值切换",
+      "资金抱团松动"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "渠道反馈", "detail": "批价稳中有升，终端动销平稳。" },
-      { "date": "06-10", "label": "资金", "detail": "北向连续两日净买入，长线资金承接增强。" },
-      { "date": "06-06", "label": "节奏", "detail": "放量站回 20 日线，防守位上移。" }
+      {
+        "date": "06-13",
+        "label": "渠道反馈",
+        "detail": "批价稳中有升，终端动销平稳。"
+      },
+      {
+        "date": "06-10",
+        "label": "资金",
+        "detail": "北向连续两日净买入，长线资金承接增强。"
+      },
+      {
+        "date": "06-06",
+        "label": "节奏",
+        "detail": "放量站回 20 日线，防守位上移。"
+      }
     ]
   },
   {
     "code": "000333",
     "name": "美的集团",
     "sector": "家电",
-    "tags": ["白马制造", "高股息", "出海"],
+    "tags": [
+      "白马制造",
+      "高股息",
+      "出海"
+    ],
     "price": 68.2,
     "dayChangePct": 0.9,
     "volumeRatio": 1.08,
@@ -53,19 +81,43 @@
     "pullbackBufferPct": 3.6,
     "breakoutBufferPct": 4.9,
     "catalyst": "出口与内销共振，股东回报率稳定，家电补贴预期改善风险收益比",
-    "watchItems": ["618 销售反馈", "海外订单", "原材料成本"],
-    "risks": ["地产链拖累", "汇率波动", "高位横盘时间过长"],
+    "watchItems": [
+      "618 销售反馈",
+      "海外订单",
+      "原材料成本"
+    ],
+    "risks": [
+      "地产链拖累",
+      "汇率波动",
+      "高位横盘时间过长"
+    ],
     "timeline": [
-      { "date": "06-12", "label": "销量", "detail": "渠道反馈空调销售延续高景气。" },
-      { "date": "06-09", "label": "回购", "detail": "市场继续交易高股息与回购预期。" },
-      { "date": "06-05", "label": "图形", "detail": "缩量整理后重新放量，趋势未破坏。" }
+      {
+        "date": "06-12",
+        "label": "销量",
+        "detail": "渠道反馈空调销售延续高景气。"
+      },
+      {
+        "date": "06-09",
+        "label": "回购",
+        "detail": "市场继续交易高股息与回购预期。"
+      },
+      {
+        "date": "06-05",
+        "label": "图形",
+        "detail": "缩量整理后重新放量，趋势未破坏。"
+      }
     ]
   },
   {
     "code": "300750",
     "name": "宁德时代",
     "sector": "动力电池",
-    "tags": ["新能源龙头", "储能", "出海"],
+    "tags": [
+      "新能源龙头",
+      "储能",
+      "出海"
+    ],
     "price": 204.6,
     "dayChangePct": 2.3,
     "volumeRatio": 1.42,
@@ -84,19 +136,43 @@
     "pullbackBufferPct": 5.8,
     "breakoutBufferPct": 6.5,
     "catalyst": "储能与海外订单驱动盈利预期修复，新技术路线提升情绪弹性",
-    "watchItems": ["海外装机数据", "新技术发布", "机构调研"],
-    "risks": ["价格战", "海外政策扰动", "高波动回撤"],
+    "watchItems": [
+      "海外装机数据",
+      "新技术发布",
+      "机构调研"
+    ],
+    "risks": [
+      "价格战",
+      "海外政策扰动",
+      "高波动回撤"
+    ],
     "timeline": [
-      { "date": "06-14", "label": "机构调研", "detail": "市场关注储能业务增速与海外盈利。"},
-      { "date": "06-11", "label": "事件催化", "detail": "新技术路线消息带动板块回暖。"},
-      { "date": "06-07", "label": "资金", "detail": "主力净流入回升，量价结构改善。"}
+      {
+        "date": "06-14",
+        "label": "机构调研",
+        "detail": "市场关注储能业务增速与海外盈利。"
+      },
+      {
+        "date": "06-11",
+        "label": "事件催化",
+        "detail": "新技术路线消息带动板块回暖。"
+      },
+      {
+        "date": "06-07",
+        "label": "资金",
+        "detail": "主力净流入回升，量价结构改善。"
+      }
     ]
   },
   {
     "code": "002594",
     "name": "比亚迪",
     "sector": "整车",
-    "tags": ["智能驾驶", "出海", "新能源车"],
+    "tags": [
+      "智能驾驶",
+      "出海",
+      "新能源车"
+    ],
     "price": 258.9,
     "dayChangePct": 1.4,
     "volumeRatio": 1.18,
@@ -115,19 +191,43 @@
     "pullbackBufferPct": 5.1,
     "breakoutBufferPct": 6.2,
     "catalyst": "出口与新车型周期形成双驱动，智驾叙事仍有估值溢价",
-    "watchItems": ["新车销量", "海外出口", "智驾进展"],
-    "risks": ["竞争加剧", "价格战反复", "整车板块情绪波动"],
+    "watchItems": [
+      "新车销量",
+      "海外出口",
+      "智驾进展"
+    ],
+    "risks": [
+      "竞争加剧",
+      "价格战反复",
+      "整车板块情绪波动"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "销量", "detail": "月度销量预期抬升，出口占比继续改善。" },
-      { "date": "06-10", "label": "行业", "detail": "整车板块情绪回暖，资金回补龙头。" },
-      { "date": "06-06", "label": "图形", "detail": "股价回踩 20 日线后重新转强。" }
+      {
+        "date": "06-13",
+        "label": "销量",
+        "detail": "月度销量预期抬升，出口占比继续改善。"
+      },
+      {
+        "date": "06-10",
+        "label": "行业",
+        "detail": "整车板块情绪回暖，资金回补龙头。"
+      },
+      {
+        "date": "06-06",
+        "label": "图形",
+        "detail": "股价回踩 20 日线后重新转强。"
+      }
     ]
   },
   {
     "code": "688041",
     "name": "海光信息",
     "sector": "算力芯片",
-    "tags": ["国产替代", "AI 算力", "自主可控"],
+    "tags": [
+      "国产替代",
+      "AI 算力",
+      "自主可控"
+    ],
     "price": 89.4,
     "dayChangePct": 3.8,
     "volumeRatio": 1.76,
@@ -146,19 +246,43 @@
     "pullbackBufferPct": 6.4,
     "breakoutBufferPct": 7.1,
     "catalyst": "国产算力景气度仍在上行，订单验证与政策预期带来高弹性",
-    "watchItems": ["订单公告", "算力政策", "资金持续性"],
-    "risks": ["高估值", "短线拥挤", "板块波动过大"],
+    "watchItems": [
+      "订单公告",
+      "算力政策",
+      "资金持续性"
+    ],
+    "risks": [
+      "高估值",
+      "短线拥挤",
+      "板块波动过大"
+    ],
     "timeline": [
-      { "date": "06-14", "label": "板块热度", "detail": "算力方向活跃度回到高位，龙头弹性突出。" },
-      { "date": "06-11", "label": "政策预期", "detail": "自主可控主题升温，风险偏好抬升。" },
-      { "date": "06-08", "label": "趋势", "detail": "突破前高后放量确认，进入主升观察区。" }
+      {
+        "date": "06-14",
+        "label": "板块热度",
+        "detail": "算力方向活跃度回到高位，龙头弹性突出。"
+      },
+      {
+        "date": "06-11",
+        "label": "政策预期",
+        "detail": "自主可控主题升温，风险偏好抬升。"
+      },
+      {
+        "date": "06-08",
+        "label": "趋势",
+        "detail": "突破前高后放量确认，进入主升观察区。"
+      }
     ]
   },
   {
     "code": "688111",
     "name": "金山办公",
     "sector": "办公软件",
-    "tags": ["AI 应用", "订阅", "信创"],
+    "tags": [
+      "AI 应用",
+      "订阅",
+      "信创"
+    ],
     "price": 248.6,
     "dayChangePct": 2.1,
     "volumeRatio": 1.31,
@@ -177,19 +301,43 @@
     "pullbackBufferPct": 5.2,
     "breakoutBufferPct": 6.6,
     "catalyst": "AI 办公产品迭代提升订阅预期，信创需求构成长期底座",
-    "watchItems": ["产品发布", "政企业务签约", "订阅 ARPU"],
-    "risks": ["兑现节奏偏慢", "估值切换", "主题热度回落"],
+    "watchItems": [
+      "产品发布",
+      "政企业务签约",
+      "订阅 ARPU"
+    ],
+    "risks": [
+      "兑现节奏偏慢",
+      "估值切换",
+      "主题热度回落"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "产品", "detail": "AI 办公功能持续迭代，关注用户转化反馈。" },
-      { "date": "06-09", "label": "资金", "detail": "软件方向获得增量资金回流。" },
-      { "date": "06-05", "label": "均线", "detail": "沿 10 日线震荡上行，趋势保持完整。" }
+      {
+        "date": "06-13",
+        "label": "产品",
+        "detail": "AI 办公功能持续迭代，关注用户转化反馈。"
+      },
+      {
+        "date": "06-09",
+        "label": "资金",
+        "detail": "软件方向获得增量资金回流。"
+      },
+      {
+        "date": "06-05",
+        "label": "均线",
+        "detail": "沿 10 日线震荡上行，趋势保持完整。"
+      }
     ]
   },
   {
     "code": "600036",
     "name": "招商银行",
     "sector": "银行",
-    "tags": ["高股息", "低估值", "机构配置"],
+    "tags": [
+      "高股息",
+      "低估值",
+      "机构配置"
+    ],
     "price": 42.8,
     "dayChangePct": 0.6,
     "volumeRatio": 0.96,
@@ -208,19 +356,43 @@
     "pullbackBufferPct": 2.7,
     "breakoutBufferPct": 3.6,
     "catalyst": "低估值与高股息提供防守属性，适合作为组合稳定器",
-    "watchItems": ["资产质量", "分红率", "利率环境"],
-    "risks": ["息差压力", "地产风险尾部", "板块弹性有限"],
+    "watchItems": [
+      "资产质量",
+      "分红率",
+      "利率环境"
+    ],
+    "risks": [
+      "息差压力",
+      "地产风险尾部",
+      "板块弹性有限"
+    ],
     "timeline": [
-      { "date": "06-12", "label": "配置", "detail": "防守资金继续偏好高股息银行。" },
-      { "date": "06-09", "label": "分红", "detail": "分红预期维持稳定，估值承压有限。" },
-      { "date": "06-04", "label": "走势", "detail": "股价稳步上移，但弹性仍弱于成长方向。" }
+      {
+        "date": "06-12",
+        "label": "配置",
+        "detail": "防守资金继续偏好高股息银行。"
+      },
+      {
+        "date": "06-09",
+        "label": "分红",
+        "detail": "分红预期维持稳定，估值承压有限。"
+      },
+      {
+        "date": "06-04",
+        "label": "走势",
+        "detail": "股价稳步上移，但弹性仍弱于成长方向。"
+      }
     ]
   },
   {
     "code": "601318",
     "name": "中国平安",
     "sector": "保险",
-    "tags": ["高股息", "资产端修复", "顺周期"],
+    "tags": [
+      "高股息",
+      "资产端修复",
+      "顺周期"
+    ],
     "price": 55.7,
     "dayChangePct": 0.8,
     "volumeRatio": 1.02,
@@ -239,19 +411,43 @@
     "pullbackBufferPct": 3.1,
     "breakoutBufferPct": 4.1,
     "catalyst": "资产端收益率改善预期叠加低估值，适合防守与回撤对冲",
-    "watchItems": ["权益市场表现", "新业务价值", "分红"],
-    "risks": ["权益市场回撤", "地产风险", "趋势弹性一般"],
+    "watchItems": [
+      "权益市场表现",
+      "新业务价值",
+      "分红"
+    ],
+    "risks": [
+      "权益市场回撤",
+      "地产风险",
+      "趋势弹性一般"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "风格", "detail": "红利风格回归时更容易获得增量配置。" },
-      { "date": "06-08", "label": "估值", "detail": "PB 仍在历史偏低区间，防守性较强。" },
-      { "date": "06-03", "label": "成交", "detail": "量能平稳，没有明显抢筹迹象。" }
+      {
+        "date": "06-13",
+        "label": "风格",
+        "detail": "红利风格回归时更容易获得增量配置。"
+      },
+      {
+        "date": "06-08",
+        "label": "估值",
+        "detail": "PB 仍在历史偏低区间，防守性较强。"
+      },
+      {
+        "date": "06-03",
+        "label": "成交",
+        "detail": "量能平稳，没有明显抢筹迹象。"
+      }
     ]
   },
   {
     "code": "300308",
     "name": "中际旭创",
     "sector": "光模块",
-    "tags": ["AI 算力", "高速光模块", "出海"],
+    "tags": [
+      "AI 算力",
+      "高速光模块",
+      "出海"
+    ],
     "price": 137.6,
     "dayChangePct": 4.5,
     "volumeRatio": 1.93,
@@ -270,19 +466,43 @@
     "pullbackBufferPct": 7.1,
     "breakoutBufferPct": 7.8,
     "catalyst": "AI 光模块景气度高位延续，业绩弹性与资金偏好共振",
-    "watchItems": ["北美订单", "AI 资本开支", "涨价持续性"],
-    "risks": ["短线过热", "业绩兑现后回落", "全球开支波动"],
+    "watchItems": [
+      "北美订单",
+      "AI 资本开支",
+      "涨价持续性"
+    ],
+    "risks": [
+      "短线过热",
+      "业绩兑现后回落",
+      "全球开支波动"
+    ],
     "timeline": [
-      { "date": "06-14", "label": "主线", "detail": "AI 光模块继续领涨，强者恒强格局延续。" },
-      { "date": "06-12", "label": "资金", "detail": "增量资金集中抱团高景气核心标的。" },
-      { "date": "06-07", "label": "技术位", "detail": "新高后没有明显放量分歧，趋势极强。" }
+      {
+        "date": "06-14",
+        "label": "主线",
+        "detail": "AI 光模块继续领涨，强者恒强格局延续。"
+      },
+      {
+        "date": "06-12",
+        "label": "资金",
+        "detail": "增量资金集中抱团高景气核心标的。"
+      },
+      {
+        "date": "06-07",
+        "label": "技术位",
+        "detail": "新高后没有明显放量分歧，趋势极强。"
+      }
     ]
   },
   {
     "code": "603986",
     "name": "兆易创新",
     "sector": "半导体设计",
-    "tags": ["国产替代", "存储", "MCU"],
+    "tags": [
+      "国产替代",
+      "存储",
+      "MCU"
+    ],
     "price": 98.7,
     "dayChangePct": 2.7,
     "volumeRatio": 1.37,
@@ -301,19 +521,43 @@
     "pullbackBufferPct": 5.6,
     "breakoutBufferPct": 6.3,
     "catalyst": "存储与 MCU 周期修复叠加国产替代逻辑，估值修复弹性仍在",
-    "watchItems": ["下游去库", "新品进展", "板块轮动"],
-    "risks": ["周期波动", "盈利修复不及预期", "主题拥挤"],
+    "watchItems": [
+      "下游去库",
+      "新品进展",
+      "板块轮动"
+    ],
+    "risks": [
+      "周期波动",
+      "盈利修复不及预期",
+      "主题拥挤"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "周期", "detail": "行业去库改善，市场重新交易修复弹性。" },
-      { "date": "06-10", "label": "主题", "detail": "国产替代线获得中线资金关注。" },
-      { "date": "06-05", "label": "走势", "detail": "回踩后重新上拐，适合做趋势跟踪。" }
+      {
+        "date": "06-13",
+        "label": "周期",
+        "detail": "行业去库改善，市场重新交易修复弹性。"
+      },
+      {
+        "date": "06-10",
+        "label": "主题",
+        "detail": "国产替代线获得中线资金关注。"
+      },
+      {
+        "date": "06-05",
+        "label": "走势",
+        "detail": "回踩后重新上拐，适合做趋势跟踪。"
+      }
     ]
   },
   {
     "code": "601899",
     "name": "紫金矿业",
     "sector": "有色金属",
-    "tags": ["黄金", "铜", "资源"],
+    "tags": [
+      "黄金",
+      "铜",
+      "资源"
+    ],
     "price": 18.4,
     "dayChangePct": 1.2,
     "volumeRatio": 1.11,
@@ -332,19 +576,43 @@
     "pullbackBufferPct": 4.2,
     "breakoutBufferPct": 4.8,
     "catalyst": "金铜价格维持高位，资源股在通胀与避险逻辑下仍具配置价值",
-    "watchItems": ["金价", "铜价", "海外项目进展"],
-    "risks": ["商品价格回落", "海外项目扰动", "资源板块轮动快"],
+    "watchItems": [
+      "金价",
+      "铜价",
+      "海外项目进展"
+    ],
+    "risks": [
+      "商品价格回落",
+      "海外项目扰动",
+      "资源板块轮动快"
+    ],
     "timeline": [
-      { "date": "06-12", "label": "商品", "detail": "金铜价格高位震荡，板块情绪稳定。" },
-      { "date": "06-08", "label": "配置", "detail": "避险资金持续关注资源龙头。" },
-      { "date": "06-04", "label": "技术", "detail": "仍运行在上升趋势内，但加速不足。" }
+      {
+        "date": "06-12",
+        "label": "商品",
+        "detail": "金铜价格高位震荡，板块情绪稳定。"
+      },
+      {
+        "date": "06-08",
+        "label": "配置",
+        "detail": "避险资金持续关注资源龙头。"
+      },
+      {
+        "date": "06-04",
+        "label": "技术",
+        "detail": "仍运行在上升趋势内，但加速不足。"
+      }
     ]
   },
   {
     "code": "002475",
     "name": "立讯精密",
     "sector": "消费电子",
-    "tags": ["苹果链", "AI 终端", "制造升级"],
+    "tags": [
+      "苹果链",
+      "AI 终端",
+      "制造升级"
+    ],
     "price": 34.6,
     "dayChangePct": 1.9,
     "volumeRatio": 1.28,
@@ -363,12 +631,692 @@
     "pullbackBufferPct": 4.7,
     "breakoutBufferPct": 5.4,
     "catalyst": "消费电子进入新品周期，AI 终端叙事提升供应链弹性预期",
-    "watchItems": ["新品备货", "北美订单", "终端创新兑现"],
-    "risks": ["消费需求波动", "外部订单扰动", "景气度验证滞后"],
+    "watchItems": [
+      "新品备货",
+      "北美订单",
+      "终端创新兑现"
+    ],
+    "risks": [
+      "消费需求波动",
+      "外部订单扰动",
+      "景气度验证滞后"
+    ],
     "timeline": [
-      { "date": "06-13", "label": "供应链", "detail": "市场重新交易消费电子新品周期。" },
-      { "date": "06-09", "label": "情绪", "detail": "AI 终端概念提升了估值想象空间。" },
-      { "date": "06-05", "label": "走势", "detail": "股价回踩后缩量企稳，等待量能放大。" }
+      {
+        "date": "06-13",
+        "label": "供应链",
+        "detail": "市场重新交易消费电子新品周期。"
+      },
+      {
+        "date": "06-09",
+        "label": "情绪",
+        "detail": "AI 终端概念提升了估值想象空间。"
+      },
+      {
+        "date": "06-05",
+        "label": "走势",
+        "detail": "股价回踩后缩量企稳，等待量能放大。"
+      }
+    ]
+  },
+  {
+    "code": "002837",
+    "name": "英维克",
+    "sector": "温控设备",
+    "tags": [
+      "数据中心",
+      "温控",
+      "新基建"
+    ],
+    "price": 74.5,
+    "dayChangePct": 2.3,
+    "volumeRatio": 1.35,
+    "epsCurrent": 0.95,
+    "epsNext": 1.22,
+    "roe": 16.8,
+    "growthQuality": 72,
+    "debtPressure": 22,
+    "capitalFlowScore": 68,
+    "northboundScore": 45,
+    "eventHeat": 62,
+    "volatility": 34,
+    "policyRisk": 18,
+    "ma20GapPct": 4.2,
+    "ma60GapPct": 8.5,
+    "pullbackBufferPct": 4.8,
+    "breakoutBufferPct": 5.6,
+    "catalyst": "数据中心温控需求增长，新产品线放量预期提升估值弹性",
+    "watchItems": [
+      "订单落地",
+      "行业招标",
+      "季度营收"
+    ],
+    "risks": [
+      "竞争加剧",
+      "订单波动",
+      "估值偏高"
+    ],
+    "timeline": [
+      {
+        "date": "06-14",
+        "label": "行业",
+        "detail": "数据中心建设加速带动温控需求。"
+      },
+      {
+        "date": "06-10",
+        "label": "业绩",
+        "detail": "市场预期中报增长确定性强。"
+      },
+      {
+        "date": "06-05",
+        "label": "资金",
+        "detail": "主力小幅回补，量能温和放大。"
+      }
+    ]
+  },
+  {
+    "code": "002639",
+    "name": "雪人集团",
+    "sector": "通用设备",
+    "tags": [
+      "压缩机",
+      "冷链",
+      "氢能"
+    ],
+    "price": 15.2,
+    "dayChangePct": 1.8,
+    "volumeRatio": 1.15,
+    "epsCurrent": 0.32,
+    "epsNext": 0.45,
+    "roe": 8.2,
+    "growthQuality": 58,
+    "debtPressure": 38,
+    "capitalFlowScore": 52,
+    "northboundScore": 35,
+    "eventHeat": 48,
+    "volatility": 32,
+    "policyRisk": 22,
+    "ma20GapPct": 2.5,
+    "ma60GapPct": 5.1,
+    "pullbackBufferPct": 3.8,
+    "breakoutBufferPct": 4.5,
+    "catalyst": "氢能政策催化叠加冷链设备需求改善，关注业绩拐点",
+    "watchItems": [
+      "氢能政策",
+      "订单回暖",
+      "季度业绩"
+    ],
+    "risks": [
+      "业绩波动",
+      "应收账款",
+      "行业周期"
+    ],
+    "timeline": [
+      {
+        "date": "06-12",
+        "label": "政策",
+        "detail": "氢能产业规划提振板块关注度。"
+      },
+      {
+        "date": "06-07",
+        "label": "行业",
+        "detail": "冷链设备需求预期改善。"
+      },
+      {
+        "date": "06-02",
+        "label": "走势",
+        "detail": "低位缩量整理，等待催化剂。"
+      }
+    ]
+  },
+  {
+    "code": "000858",
+    "name": "五粮液",
+    "sector": "白酒",
+    "tags": [
+      "高端消费",
+      "品牌消费",
+      "机构重仓"
+    ],
+    "price": 152.4,
+    "dayChangePct": 1.2,
+    "volumeRatio": 1.08,
+    "epsCurrent": 8.15,
+    "epsNext": 9.12,
+    "roe": 25.8,
+    "growthQuality": 72,
+    "debtPressure": 10,
+    "capitalFlowScore": 65,
+    "northboundScore": 72,
+    "eventHeat": 58,
+    "volatility": 26,
+    "policyRisk": 20,
+    "ma20GapPct": 2.8,
+    "ma60GapPct": 5.9,
+    "pullbackBufferPct": 3.6,
+    "breakoutBufferPct": 4.8,
+    "catalyst": "渠道改革深化，批价稳定提升市场信心",
+    "watchItems": [
+      "批价走势",
+      "动销数据",
+      "渠道库存"
+    ],
+    "risks": [
+      "消费疲软",
+      "库存压力",
+      "估值切换"
+    ],
+    "timeline": [
+      {
+        "date": "06-13",
+        "label": "批价",
+        "detail": "批价稳中有升，渠道信心恢复。"
+      },
+      {
+        "date": "06-09",
+        "label": "动销",
+        "detail": "终端动销数据好于预期。"
+      },
+      {
+        "date": "06-05",
+        "label": "资金",
+        "detail": "机构资金持续配置。"
+      }
+    ]
+  },
+  {
+    "code": "601318",
+    "name": "中国平安",
+    "sector": "保险",
+    "tags": [
+      "金融龙头",
+      "高股息",
+      "蓝筹"
+    ],
+    "price": 48.6,
+    "dayChangePct": 0.8,
+    "volumeRatio": 1.05,
+    "epsCurrent": 6.22,
+    "epsNext": 7.15,
+    "roe": 13.4,
+    "growthQuality": 58,
+    "debtPressure": 22,
+    "capitalFlowScore": 55,
+    "northboundScore": 62,
+    "eventHeat": 48,
+    "volatility": 22,
+    "policyRisk": 28,
+    "ma20GapPct": 1.8,
+    "ma60GapPct": 4.2,
+    "pullbackBufferPct": 3.2,
+    "breakoutBufferPct": 4.1,
+    "catalyst": "保险业务修复预期叠加高股息配置价值",
+    "watchItems": [
+      "保费收入",
+      "投资收益率",
+      "分红政策"
+    ],
+    "risks": [
+      "利率下行",
+      "资本市场波动",
+      "监管变化"
+    ],
+    "timeline": [
+      {
+        "date": "06-12",
+        "label": "业绩",
+        "detail": "保费收入稳步改善，NBV转正。"
+      },
+      {
+        "date": "06-08",
+        "label": "分红",
+        "detail": "高股息策略获资金关注。"
+      },
+      {
+        "date": "06-03",
+        "label": "行业",
+        "detail": "保险板块整体估值修复。"
+      }
+    ]
+  },
+  {
+    "code": "300124",
+    "name": "汇川技术",
+    "sector": "工业自动化",
+    "tags": [
+      "智能制造",
+      "机器人",
+      "工业互联"
+    ],
+    "price": 68.5,
+    "dayChangePct": 2.1,
+    "volumeRatio": 1.28,
+    "epsCurrent": 2.45,
+    "epsNext": 3.12,
+    "roe": 22.6,
+    "growthQuality": 82,
+    "debtPressure": 16,
+    "capitalFlowScore": 74,
+    "northboundScore": 68,
+    "eventHeat": 71,
+    "volatility": 35,
+    "policyRisk": 15,
+    "ma20GapPct": 5.2,
+    "ma60GapPct": 12.1,
+    "pullbackBufferPct": 5.5,
+    "breakoutBufferPct": 6.2,
+    "catalyst": "国产替代加速叠加机器人产业链景气度提升",
+    "watchItems": [
+      "订单增速",
+      "新品发布",
+      "海外拓展"
+    ],
+    "risks": [
+      "制造业景气波动",
+      "竞争加剧",
+      "估值消化"
+    ],
+    "timeline": [
+      {
+        "date": "06-14",
+        "label": "行业",
+        "detail": "自动化需求持续旺盛，订单饱满。"
+      },
+      {
+        "date": "06-11",
+        "label": "机器人",
+        "detail": "人形机器人概念催化板块热度。"
+      },
+      {
+        "date": "06-06",
+        "label": "资金",
+        "detail": "北向持续增持，机构看好。"
+      }
+    ]
+  },
+  {
+    "code": "002415",
+    "name": "海康威视",
+    "sector": "安防",
+    "tags": [
+      "AI视觉",
+      "安防龙头",
+      "数字化转型"
+    ],
+    "price": 34.2,
+    "dayChangePct": 1.5,
+    "volumeRatio": 1.12,
+    "epsCurrent": 1.82,
+    "epsNext": 2.05,
+    "roe": 19.8,
+    "growthQuality": 68,
+    "debtPressure": 18,
+    "capitalFlowScore": 58,
+    "northboundScore": 64,
+    "eventHeat": 52,
+    "volatility": 28,
+    "policyRisk": 24,
+    "ma20GapPct": 3.1,
+    "ma60GapPct": 6.3,
+    "pullbackBufferPct": 3.8,
+    "breakoutBufferPct": 5,
+    "catalyst": "AI大模型赋能视觉业务，创新业务高速增长",
+    "watchItems": [
+      "AI落地",
+      "海外营收",
+      "创新业务增速"
+    ],
+    "risks": [
+      "海外制裁",
+      "竞争加剧",
+      "增长放缓"
+    ],
+    "timeline": [
+      {
+        "date": "06-13",
+        "label": "AI",
+        "detail": "大模型赋能产品线获市场认可。"
+      },
+      {
+        "date": "06-09",
+        "label": "海外",
+        "detail": "海外营收保持稳健增长。"
+      },
+      {
+        "date": "06-04",
+        "label": "创新",
+        "detail": "创新业务增速超预期。"
+      }
+    ]
+  },
+  {
+    "code": "601012",
+    "name": "隆基绿能",
+    "sector": "光伏",
+    "tags": [
+      "新能源",
+      "光伏龙头",
+      "绿色能源"
+    ],
+    "price": 21.8,
+    "dayChangePct": -0.8,
+    "volumeRatio": 0.92,
+    "epsCurrent": 1.45,
+    "epsNext": 1.68,
+    "roe": 18.2,
+    "growthQuality": 65,
+    "debtPressure": 28,
+    "capitalFlowScore": 48,
+    "northboundScore": 52,
+    "eventHeat": 55,
+    "volatility": 40,
+    "policyRisk": 32,
+    "ma20GapPct": -1.2,
+    "ma60GapPct": -2.5,
+    "pullbackBufferPct": 5,
+    "breakoutBufferPct": 3.2,
+    "catalyst": "光伏板块超跌后估值修复，新技术路线突破值得关注",
+    "watchItems": [
+      "组件价格",
+      "产能出清",
+      "新技术进展"
+    ],
+    "risks": [
+      "产能过剩",
+      "价格战",
+      "贸易摩擦"
+    ],
+    "timeline": [
+      {
+        "date": "06-13",
+        "label": "行业",
+        "detail": "光伏板块持续调整，估值进入低位。"
+      },
+      {
+        "date": "06-10",
+        "label": "价格",
+        "detail": "组件价格企稳，产能出清加速。"
+      },
+      {
+        "date": "06-05",
+        "label": "技术",
+        "detail": "BC电池技术路线关注度提升。"
+      }
+    ]
+  },
+  {
+    "code": "300059",
+    "name": "东方财富",
+    "sector": "互联网金融",
+    "tags": [
+      "券商",
+      "互联网",
+      "财富管理"
+    ],
+    "price": 18.2,
+    "dayChangePct": 1.6,
+    "volumeRatio": 1.25,
+    "epsCurrent": 0.72,
+    "epsNext": 0.85,
+    "roe": 14.5,
+    "growthQuality": 71,
+    "debtPressure": 24,
+    "capitalFlowScore": 82,
+    "northboundScore": 58,
+    "eventHeat": 74,
+    "volatility": 36,
+    "policyRisk": 26,
+    "ma20GapPct": 4.5,
+    "ma60GapPct": 9.2,
+    "pullbackBufferPct": 5.2,
+    "breakoutBufferPct": 6,
+    "catalyst": "市场活跃度提升驱动经纪与两融业务，AI赋能财富管理",
+    "watchItems": [
+      "市场成交额",
+      "两融余额",
+      "基金销售"
+    ],
+    "risks": [
+      "市场低迷",
+      "竞争加剧",
+      "监管收紧"
+    ],
+    "timeline": [
+      {
+        "date": "06-14",
+        "label": "成交",
+        "detail": "两市成交额回升，经纪业务受益。"
+      },
+      {
+        "date": "06-11",
+        "label": "AI",
+        "detail": "AI投顾产品功能升级获关注。"
+      },
+      {
+        "date": "06-07",
+        "label": "资金",
+        "detail": "主力资金持续净流入。"
+      }
+    ]
+  },
+  {
+    "code": "601857",
+    "name": "中国石油",
+    "sector": "石油",
+    "tags": [
+      "能源龙头",
+      "央企",
+      "高股息"
+    ],
+    "price": 9.2,
+    "dayChangePct": 0.5,
+    "volumeRatio": 0.95,
+    "epsCurrent": 0.85,
+    "epsNext": 0.92,
+    "roe": 10.5,
+    "growthQuality": 45,
+    "debtPressure": 25,
+    "capitalFlowScore": 50,
+    "northboundScore": 55,
+    "eventHeat": 42,
+    "volatility": 18,
+    "policyRisk": 35,
+    "ma20GapPct": 1.5,
+    "ma60GapPct": 3.8,
+    "pullbackBufferPct": 2.5,
+    "breakoutBufferPct": 3.2,
+    "catalyst": "高股息防御价值，油价中枢上移支撑盈利",
+    "watchItems": [
+      "油价走势",
+      "分红政策",
+      "央企改革"
+    ],
+    "risks": [
+      "油价下行",
+      "新能源替代",
+      "政策调控"
+    ],
+    "timeline": [
+      {
+        "date": "06-12",
+        "label": "油价",
+        "detail": "国际油价高位震荡，盈利预期稳定。"
+      },
+      {
+        "date": "06-08",
+        "label": "分红",
+        "detail": "高股息策略持续受资金青睐。"
+      },
+      {
+        "date": "06-03",
+        "label": "改革",
+        "detail": "央企市值管理预期升温。"
+      }
+    ]
+  },
+  {
+    "code": "688981",
+    "name": "中芯国际",
+    "sector": "半导体制造",
+    "tags": [
+      "晶圆代工",
+      "国产替代",
+      "芯片"
+    ],
+    "price": 52.8,
+    "dayChangePct": 1.8,
+    "volumeRatio": 1.18,
+    "epsCurrent": 1.52,
+    "epsNext": 1.88,
+    "roe": 8.5,
+    "growthQuality": 62,
+    "debtPressure": 30,
+    "capitalFlowScore": 62,
+    "northboundScore": 48,
+    "eventHeat": 68,
+    "volatility": 38,
+    "policyRisk": 32,
+    "ma20GapPct": 3.5,
+    "ma60GapPct": 7.8,
+    "pullbackBufferPct": 4.8,
+    "breakoutBufferPct": 5.5,
+    "catalyst": "国产替代逻辑持续强化，成熟制程产能利用率回升",
+    "watchItems": [
+      "产能利用率",
+      "先进制程",
+      "行业景气"
+    ],
+    "risks": [
+      "出口管制",
+      "行业周期",
+      "竞争加剧"
+    ],
+    "timeline": [
+      {
+        "date": "06-13",
+        "label": "产能",
+        "detail": "产能利用率持续回升，订单饱满。"
+      },
+      {
+        "date": "06-10",
+        "label": "政策",
+        "detail": "国产替代政策加码，板块情绪提振。"
+      },
+      {
+        "date": "06-05",
+        "label": "行业",
+        "detail": "半导体景气周期预期改善。"
+      }
+    ]
+  },
+  {
+    "code": "300274",
+    "name": "阳光电源",
+    "sector": "光伏逆变器",
+    "tags": [
+      "新能源",
+      "储能",
+      "逆变器龙头"
+    ],
+    "price": 88.4,
+    "dayChangePct": 2.8,
+    "volumeRatio": 1.45,
+    "epsCurrent": 5.35,
+    "epsNext": 6.82,
+    "roe": 32.5,
+    "growthQuality": 84,
+    "debtPressure": 20,
+    "capitalFlowScore": 78,
+    "northboundScore": 65,
+    "eventHeat": 80,
+    "volatility": 44,
+    "policyRisk": 25,
+    "ma20GapPct": 6.5,
+    "ma60GapPct": 14.2,
+    "pullbackBufferPct": 6.8,
+    "breakoutBufferPct": 7.2,
+    "catalyst": "全球储能需求爆发，逆变器出货量持续高增",
+    "watchItems": [
+      "海外订单",
+      "储能出货",
+      "毛利率"
+    ],
+    "risks": [
+      "竞争加剧",
+      "贸易壁垒",
+      "原材料涨价"
+    ],
+    "timeline": [
+      {
+        "date": "06-14",
+        "label": "订单",
+        "detail": "海外大单持续落地，景气度高涨。"
+      },
+      {
+        "date": "06-11",
+        "label": "储能",
+        "detail": "全球储能装机超预期，出货高增。"
+      },
+      {
+        "date": "06-06",
+        "label": "资金",
+        "detail": "主力资金大举流入，看多情绪浓厚。"
+      }
+    ]
+  },
+  {
+    "code": "002230",
+    "name": "科大讯飞",
+    "sector": "人工智能",
+    "tags": [
+      "AI龙头",
+      "大模型",
+      "教育"
+    ],
+    "price": 48.6,
+    "dayChangePct": 3.2,
+    "volumeRatio": 1.68,
+    "epsCurrent": 0.48,
+    "epsNext": 0.72,
+    "roe": 7.2,
+    "growthQuality": 66,
+    "debtPressure": 22,
+    "capitalFlowScore": 76,
+    "northboundScore": 42,
+    "eventHeat": 92,
+    "volatility": 42,
+    "policyRisk": 20,
+    "ma20GapPct": 7.8,
+    "ma60GapPct": 16.5,
+    "pullbackBufferPct": 6.5,
+    "breakoutBufferPct": 7,
+    "catalyst": "星火大模型持续迭代，AI应用落地加速",
+    "watchItems": [
+      "大模型进展",
+      "商业化落地",
+      "政策支持"
+    ],
+    "risks": [
+      "估值过高",
+      "盈利不及预期",
+      "竞争加剧"
+    ],
+    "timeline": [
+      {
+        "date": "06-14",
+        "label": "大模型",
+        "detail": "星火大模型新版本发布，能力大幅提升。"
+      },
+      {
+        "date": "06-12",
+        "label": "政策",
+        "detail": "AI产业支持政策持续加码。"
+      },
+      {
+        "date": "06-07",
+        "label": "应用",
+        "detail": "教育、医疗等场景落地加速。"
+      }
     ]
   }
 ]

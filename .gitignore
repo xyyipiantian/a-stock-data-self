@@ -6,3 +6,5 @@ coverage/
 bin/
 obj/
 outputs/
+
+.vercel

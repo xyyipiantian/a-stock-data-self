@@ -4,9 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alpha Lens 投研面板</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=20260616a" />
   </head>
   <body>
+  <header class="top-bar">
+    <span class="top-bar-brand">Alpha Lens</span>
+    <div class="top-bar-auth">
+      <span id="topAuthLabel">本地模式</span>
+      <button class="secondary-button compact" id="signInGithubButton" type="button">GitHub 登录</button>
+      <button class="secondary-button compact" id="signInGoogleButton" type="button">Google 登录</button>
+      <button class="secondary-button compact" id="signOutButton" type="button" hidden>退出登录</button>
+    </div>
+  </header>
     <main class="page-shell">
       <section class="hero">
         <div class="hero-copy">
@@ -40,22 +49,10 @@
         </div>
         <div class="search-meta">
           <p id="statusLine">正在加载投研样本池...</p>
-          <div class="quick-picks" id="quickPicks"></div>
+          <!-- quick-picks removed -->
         </div>
         <div class="suggestion-list" id="suggestionList"></div>
-        <div class="auth-panel">
-          <div>
-            <p class="section-label">账户与云同步</p>
-            <strong id="authHeadline">本地模式</strong>
-            <p id="authCopy">当前还没接入云端账号。继续本地使用也可以。</p>
-          </div>
-          <div class="auth-actions" id="authActions">
-            <button class="secondary-button" id="signInGoogleButton" type="button">Google 登录</button>
-            <button class="secondary-button" id="signInGithubButton" type="button">GitHub 登录</button>
-            <button class="secondary-button" id="signOutButton" type="button" hidden>退出登录</button>
-          </div>
-        </div>
-      </section>
+        </section>
 
       <section class="alert-strip" id="alertStrip" hidden>
         <div>
@@ -65,7 +62,7 @@
         <p id="alertCopy"></p>
       </section>
 
-      <section class="summary-grid">
+      <section class="summary-grid" id="analysisSection">
         <article class="stock-card">
           <div class="stock-heading">
             <div>
@@ -79,6 +76,7 @@
             <span id="stockChange">-</span>
           </div>
           <p class="stock-sector" id="stockSector">-</p>
+          <p class="data-source-note" id="dataSourceNote">-</p>
           <div class="tag-list" id="stockTags"></div>
         </article>
 
@@ -187,6 +185,9 @@
             </label>
             <span id="monitorStatus">每 60 秒扫描一次</span>
           </div>
+          <div class="monitor-legend" id="monitorLegend">
+            待机：未触发阈值；观察：当日转强；中优先：回踩试仓或风险降温；高优先：突破提醒。
+          </div>
           <div class="watchlist" id="watchlist"></div>
         </section>
 
@@ -225,23 +226,9 @@
           </form>
         </section>
 
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <p class="section-label">部署准备</p>
-              <h3>多人版上线前还差什么</h3>
-            </div>
-          </div>
-          <div class="plan-list">
-            <div class="plan-item">在 Supabase 执行 [supabase/schema.sql](/C:/Users/59110/Documents/New%20project/supabase/schema.sql)</div>
-            <div class="plan-item">配置 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`</div>
-            <div class="plan-item">开启 Google / GitHub OAuth，用户登录后自动隔离自己的自选和提醒</div>
-            <div class="plan-item">用定时任务调用 `/api/cron/dispatch`，把高优先提醒发到用户自己的机器人</div>
-          </div>
-        </section>
       </section>
     </main>
 
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="/app.js?v=20260616a"></script>
   </body>
 </html>

@@ -1,16 +1,6 @@
-const fs = require("fs");
-const http = require("http");
-const path = require("path");
-const { URL } = require("url");
-
-const { analyzeStock, findStock, listStocks, monitorStocks, searchStocks } = require("./src/strategy-engine");
-const { runAlertDispatch } = require("./src/monitor-dispatch");
-const { getPublicRuntimeConfig } = require("./src/supabase-server");
-
-const rootDir = __dirname;
-const publicDir = path.join(rootDir, "public");
-const port = Number(process.env.PORT || 3987);
-const host = process.env.HOST || "0.0.0.0";
+﻿const { analyzeStock, findStock, listStocks, monitorStocks, searchStocks } = require("../src/strategy-engine");
+const { runAlertDispatch } = require("../src/monitor-dispatch");
+const { getPublicRuntimeConfig } = require("../src/supabase-server");
 
 function isAuthorizedCronRequest(req, reqUrl) {
   const legacySecret = process.env.MONITOR_CRON_SECRET || "";
@@ -31,48 +21,13 @@ function isAuthorizedCronRequest(req, reqUrl) {
 
 function jsonResponse(res, statusCode, body) {
   const payload = JSON.stringify(body, null, 2);
-  res.writeHead(statusCode, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store"
-  });
+  res.setHeader("content-type", "application/json; charset=utf-8");
+  res.setHeader("cache-control", "no-store");
+  res.statusCode = statusCode;
   res.end(payload);
 }
 
-function serveStatic(res, pathname) {
-  const normalized = pathname === "/" ? "/index.html" : pathname;
-  const filePath = path.normalize(path.join(publicDir, normalized));
-  if (!filePath.startsWith(publicDir)) {
-    res.writeHead(403);
-    res.end("Forbidden");
-    return;
-  }
-
-  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    res.writeHead(404);
-    res.end("Not found");
-    return;
-  }
-
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType =
-    ext === ".html"
-      ? "text/html; charset=utf-8"
-      : ext === ".css"
-        ? "text/css; charset=utf-8"
-        : ext === ".js"
-          ? "text/javascript; charset=utf-8"
-          : ext === ".json"
-            ? "application/json; charset=utf-8"
-            : "application/octet-stream";
-
-  res.writeHead(200, {
-    "content-type": contentType,
-    "cache-control": "no-store"
-  });
-  fs.createReadStream(filePath).pipe(res);
-}
-
-async function handleApi(reqUrl, res) {
+async function handleApi(reqUrl, res, req) {
   if (reqUrl.pathname === "/api/stocks") {
     const query = reqUrl.searchParams.get("query") || "";
     const stocks = query ? await searchStocks(query) : listStocks();
@@ -132,33 +87,16 @@ async function handleApi(reqUrl, res) {
   return false;
 }
 
-async function handleRequest(req, res) {
-  const reqUrl = new URL(req.url, `http://${req.headers.host}`);
+module.exports = async (req, res) => {
+  const reqUrl = new URL(req.url, "http://" + (req.headers.host || "localhost"));
 
   try {
-    if (await handleApi(reqUrl, res)) return;
-    serveStatic(res, reqUrl.pathname);
+    if (await handleApi(reqUrl, res, req)) return;
+    jsonResponse(res, 404, { error: "Not found" });
   } catch (error) {
     jsonResponse(res, 500, {
       error: error.message,
       stack: process.env.NODE_ENV === "production" ? undefined : error.stack
     });
   }
-}
-
-async function main() {
-  if (process.argv.includes("--dispatch-alerts")) {
-    const result = await runAlertDispatch();
-    console.log(JSON.stringify(result, null, 2));
-    return;
-  }
-
-  http.createServer(handleRequest).listen(port, host, () => {
-    console.log(`A-share strategy panel running at http://${host}:${port}`);
-  });
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+};

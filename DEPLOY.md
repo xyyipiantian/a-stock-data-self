@@ -85,6 +85,30 @@ Header: x-monitor-secret: <MONITOR_CRON_SECRET>
 - GitHub Actions schedule
 - cron-job.org
 
+### 方式 C：GitHub Actions（推荐，网页关掉也能继续推送）
+
+仓库里已经自带 `.github/workflows/dispatch-alerts.yml`，默认每 5 分钟触发一次生产环境的 `/api/cron/dispatch`。
+
+在 GitHub 仓库 `Settings -> Secrets and variables -> Actions` 里至少配置下面一个密钥：
+
+```text
+MONITOR_CRON_SECRET=<与你线上环境变量一致的值>
+```
+
+如果你改成了 Bearer 鉴权，也可以改配：
+
+```text
+CRON_SECRET=<与你线上环境变量一致的值>
+```
+
+可选：
+
+```text
+PROD_DISPATCH_URL=https://alpha-lens-taupe.vercel.app/api/cron/dispatch
+```
+
+不配 `PROD_DISPATCH_URL` 时，工作流默认打当前生产地址。
+
 ## 7. 用户侧配置
 
 用户登录后可在页面中：

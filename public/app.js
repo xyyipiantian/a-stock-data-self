@@ -20,6 +20,7 @@ const state = {
 
 const WATCHLIST_KEY = "alpha-lens-watchlist-v1";
 const ALERT_LOG_KEY = "alpha-lens-alert-log-v1";
+const LAST_STOCK_KEY = "alpha-lens-last-stock-v1";
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -56,6 +57,26 @@ function severityLabel(severity) {
   if (severity === "low") return "观察";
   if (severity === "error") return "异常";
   return "待机";
+}
+
+function watchStatusCopy(item) {
+  const breakoutPct = item.breakoutPct ?? 0.8;
+  const pullbackPct = item.pullbackPct ?? 1.5;
+  const preferredScore = item.preferredScore ?? 68;
+
+  if (item.lastSeverity === "high") {
+    return "已触发突破提醒，说明价格与评分同时满足偏强条件，优先看放量确认。";
+  }
+  if (item.lastSeverity === "medium") {
+    return "已触发中优先提醒，通常代表接近支撑试仓区，或者策略评分开始降温。";
+  }
+  if (item.lastSeverity === "low") {
+    return "已进入观察状态，说明当日有走强迹象，但还没强到正式突破。";
+  }
+  if (item.lastSeverity === "error") {
+    return "本轮扫描没拿到有效行情，建议稍后重试，或点“查看实时策略”核对当前数据源。";
+  }
+  return `当前待机，表示还没突破 ${breakoutPct}% 阈值，也没回踩到 ${pullbackPct}% 观察区，系统继续等待更明确的信号；目标分数线 ${preferredScore}。`;
 }
 
 function cloudEnabled() {
@@ -145,7 +166,24 @@ async function syncCloudState() {
     state.auth.client.from("notification_channels").select("*")
   ]);
 
-  state.watchlist = (watchRes.data || []).map(mapDbWatchlist);
+  var cloudWatchlist = (watchRes.data || []).map(mapDbWatchlist);
+    var cloudCodes = new Set(cloudWatchlist.map(function(x) { return x.code; }));
+    try { var localItems = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]"); } catch(e) { localItems = []; }
+    localItems.forEach(function(item) {
+      if (!cloudCodes.has(item.code)) {
+        state.auth.client.from("watchlists").insert({
+          user_id: state.auth.user.id,
+          code: item.code,
+          name: item.name,
+          memo: item.memo || "",
+          breakout_pct: item.breakoutPct || 0.8,
+          pullback_pct: item.pullbackPct || 1.5,
+          preferred_score: item.preferredScore || 64,
+          max_risk_alert_score: item.maxRiskAlertScore || 60
+        }).then();
+      }
+    });
+    state.watchlist = cloudWatchlist.concat(localItems.filter(function(x) { return !cloudCodes.has(x.code); }));
   state.alerts = (alertRes.data || []).map(mapDbAlert);
   state.channels = {
     feishu: channelRes.data?.find((item) => item.provider === "feishu")?.webhook_url || "",
@@ -166,8 +204,7 @@ function renderAuth() {
   const signOutButton = $("#signOutButton");
 
   if (!config?.authEnabled) {
-    $("#authHeadline").textContent = "本地模式";
-    $("#authCopy").textContent = "还没配置 Supabase。现在仍可本地使用，但不会有注册登录和云同步。";
+    $("#topAuthLabel").textContent = "本地模式";
     signInGoogleButton.hidden = true;
     signInGithubButton.hidden = true;
     signOutButton.hidden = true;
@@ -175,16 +212,19 @@ function renderAuth() {
   }
 
   if (!user) {
-    $("#authHeadline").textContent = "可注册登录";
-    $("#authCopy").textContent = "登录后，每个人会拥有自己的自选监控、提醒渠道和提醒记录，互不干扰。";
+    $("#topAuthLabel").textContent = "可注册登录";
     signInGoogleButton.hidden = false;
     signInGithubButton.hidden = false;
     signOutButton.hidden = true;
     return;
   }
 
-  $("#authHeadline").textContent = `${user.email || user.id}`;
-  $("#authCopy").textContent = "当前已连接云端账号。你的自选股、飞书/企业微信提醒和提醒日志将只属于你自己。";
+  const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || "";
+  const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || "???";
+  const userLabel = avatar
+    ? `<img src="${escapeHtml(avatar)}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:8px" /><span style="vertical-align:middle">${escapeHtml(displayName)}</span>`
+    : escapeHtml(displayName);
+  $("#topAuthLabel").innerHTML = userLabel;
   signInGoogleButton.hidden = true;
   signInGithubButton.hidden = true;
   signOutButton.hidden = false;
@@ -194,20 +234,105 @@ function renderChannels() {
   $("#feishuWebhookInput").value = state.channels.feishu || "";
   $("#wecomWebhookInput").value = state.channels.wecom || "";
   $("#channelStatus").textContent = cloudEnabled()
-    ? "当前已登录。保存后，这两个机器人渠道会只属于你的账号。"
+    ? "当前已登录。保存后，这两个机器人渠道会只属于你的账号；只要网页开着，新的盯盘提醒会同步推送到你的机器人。"
     : "登录后可保存自己的飞书 / 企业微信提醒。";
 }
 
-async function signIn(provider) {
-  if (!state.auth.client) return;
-  await state.auth.client.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: window.location.href
-    }
-  });
+function buildWebhookMessage(title, lines) {
+  return [title, ...lines].join("\n");
 }
 
+async function sendFeishuWebhook(webhookUrl, text) {
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      msg_type: "text",
+      content: {
+        text
+      }
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`Feishu webhook failed: HTTP ${response.status}`);
+  }
+}
+
+async function sendWecomWebhook(webhookUrl, text) {
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      msgtype: "text",
+      text: {
+        content: text
+      }
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`WeCom webhook failed: HTTP ${response.status}`);
+  }
+}
+
+async function sendChannelTestMessages(feishu, wecom) {
+  const sent = [];
+  const failed = [];
+  const text = buildWebhookMessage("Alpha Lens 提醒渠道已开通", [
+    "这是一条测试消息。",
+    "后续只要网页保持打开，新的机会盯盘提醒会同步推送到这里。"
+  ]);
+
+  if (feishu) {
+    try {
+      await sendFeishuWebhook(feishu, text);
+      sent.push("飞书");
+    } catch (error) {
+      failed.push(`飞书：${error.message}`);
+    }
+  }
+
+  if (wecom) {
+    try {
+      await sendWecomWebhook(wecom, text);
+      sent.push("企业微信");
+    } catch (error) {
+      failed.push(`企业微信：${error.message}`);
+    }
+  }
+
+  return { sent, failed };
+}
+
+async function notifyChannelsForAlert(alert) {
+  const tasks = [];
+  const text = buildWebhookMessage(`${alert.name} ${alert.code} · ${alert.signal}`, [
+    `价格 ${formatPrice(alert.price)} (${formatPct(alert.changePct)})`,
+    `评分 ${alert.totalScore} · 观点 ${alert.stance}`,
+    `原因：${alert.reason}`,
+    `建议：${alert.action}`
+  ]);
+
+  if (state.channels.feishu) {
+    tasks.push(sendFeishuWebhook(state.channels.feishu, text));
+  }
+  if (state.channels.wecom) {
+    tasks.push(sendWecomWebhook(state.channels.wecom, text));
+  }
+
+  if (!tasks.length) return;
+  await Promise.allSettled(tasks);
+}
+
+async function signIn(provider) {
+  if (!state.auth.config?.supabaseUrl) return;
+  var base = state.auth.config.supabaseUrl.replace(/\/+$/, "");
+  var redirect = encodeURIComponent(window.location.href.split("#")[0]);
+  window.location.href = base + "/auth/v1/authorize?provider=" + provider + "&redirect_to=" + redirect;
+}
 async function signOut() {
   if (!state.auth.client) return;
   await state.auth.client.auth.signOut();
@@ -253,10 +378,21 @@ async function saveChannels(event) {
   }
 
   state.channels = { feishu, wecom };
-  $("#channelStatus").textContent = "提醒渠道已保存。后续后台轮询会把机会推到你自己的机器人。";
+  const result = await sendChannelTestMessages(feishu, wecom);
+  if (result.failed.length && !result.sent.length) {
+    $("#channelStatus").textContent = `提醒渠道已保存，但测试消息发送失败：${result.failed.join("；")}`;
+    return;
+  }
+  if (result.failed.length) {
+    $("#channelStatus").textContent = `提醒渠道已保存。测试消息已发送到 ${result.sent.join("、")}；${result.failed.join("；")}`;
+    return;
+  }
+  $("#channelStatus").textContent = result.sent.length
+    ? `提醒渠道已保存，测试消息已发送到 ${result.sent.join("、")}。后续新的盯盘提醒会在网页显示时同步推送。`
+    : "提醒渠道已保存。";
 }
 
-function renderQuickPicks() {
+function renderQuickPicks() { return; /* disabled - no stock pool */
   $("#quickPicks").innerHTML = state.stocks
     .slice(0, 6)
     .map(
@@ -285,18 +421,23 @@ function renderSuggestions(stocks) {
 
   document.querySelectorAll(".suggestion-chip").forEach((button) => {
     button.addEventListener("click", () => {
-      $("#stockQuery").value = button.dataset.code;
+      const label = button.textContent.split(" · ").slice(0, 2).join(" ");
+      $("#stockQuery").value = label.trim();
       analyze(button.dataset.code);
     });
   });
 }
 
 function renderSummary(data) {
+  const sourceLabel = data.meta.source === "live-quote" ? "实时行情" : "样本兜底";
   $("#stockTitle").textContent = `${data.stock.name} ${data.stock.code}`;
   $("#stockPrice").textContent = formatPrice(data.stock.price);
   $("#stockChange").textContent = formatPct(data.stock.dayChangePct);
   $("#stockChange").className = data.stock.dayChangePct >= 0 ? "price-up" : "price-down";
   $("#stockSector").textContent = `${data.stock.sector} · ${data.snapshot.stance}`;
+  $("#dataSourceNote").textContent = data.meta.warning
+    ? `${sourceLabel} · 来源 ${data.meta.provider} · ${data.meta.warning}`
+    : `${sourceLabel} · 来源 ${data.meta.provider}`;
   $("#stockTags").innerHTML = data.stock.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
   $("#stanceBadge").textContent = data.snapshot.stance;
   $("#confidenceText").textContent = `置信度 ${data.snapshot.confidence}`;
@@ -409,6 +550,16 @@ function renderAlertStrip() {
   $("#alertCopy").textContent = `${topAlert.reason} 建议：${topAlert.action}`;
 }
 
+async function openStockAnalysis(code) {
+  if (!code) return;
+  $("#stockQuery").value = code;
+  await analyze(code);
+  $("#analysisSection")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
 function renderWatchlist() {
   $("#watchlist").innerHTML = state.watchlist.length
     ? state.watchlist
@@ -427,8 +578,9 @@ function renderWatchlist() {
                 <span class="metric-pill">回踩容差 ${item.pullbackPct ?? 1.5}% </span>
                 <span class="metric-pill">目标分数 ${item.preferredScore ?? 68}</span>
               </div>
+              <p class="watch-status-copy">${escapeHtml(watchStatusCopy(item))}</p>
               <div class="watch-item-actions">
-                <button data-action="analyze" data-code="${item.code}">查看策略</button>
+                <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
                 <button data-action="remove" data-code="${item.code}">移除</button>
               </div>
             </article>
@@ -439,9 +591,8 @@ function renderWatchlist() {
 
   document.querySelectorAll(".watch-item-actions button").forEach((button) => {
     if (button.dataset.action === "analyze") {
-      button.addEventListener("click", () => {
-        $("#stockQuery").value = button.dataset.code;
-        analyze(button.dataset.code);
+      button.addEventListener("click", async () => {
+        await openStockAnalysis(button.dataset.code);
       });
     } else {
       button.addEventListener("click", () => removeWatch(button.dataset.code));
@@ -461,12 +612,19 @@ function renderOpportunityLog() {
               </div>
               <p>${escapeHtml(item.reason)}</p>
               <p>${escapeHtml(item.action)}</p>
+              <p><button class="secondary-button compact log-analyze-button" data-code="${item.code}">查看这只股票策略</button></p>
               <p class="position-footnote">${new Date(item.updatedAt).toLocaleString("zh-CN")}</p>
             </article>
           `
         )
         .join("")
     : `<div class="empty-state">${cloudEnabled() ? "云端提醒日志会沉淀在这里，便于复盘每个人自己的机会与风险。" : "监控提醒会在这里沉淀，便于复盘最近出现过哪些机会和风险。"}</div>`;
+
+  document.querySelectorAll(".log-analyze-button").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await openStockAnalysis(button.dataset.code);
+    });
+  });
 }
 
 function renderAll(data) {
@@ -523,6 +681,7 @@ async function addCurrentToWatchlist() {
     }
     data = await fetchJson(`/api/strategy?query=${encodeURIComponent(query)}`);
     renderAll(data);
+    localStorage.setItem(LAST_STOCK_KEY, data.stock.code);
   }
 
   if (findWatch(data.stock.code)) {
@@ -595,6 +754,7 @@ function mergeAlertResult(alert) {
         body: alert.action
       });
     }
+    notifyChannelsForAlert(alert).catch(() => {});
   }
 }
 
@@ -646,13 +806,20 @@ function setMonitorEnabled(enabled) {
 }
 
 async function analyze(query) {
-  const keyword = query || $("#stockQuery").value.trim() || "600519";
+  const keyword = query || $("#stockQuery").value.trim();
+  if (!keyword) {
+    setStatus("输入代码或名称，开始生成策略");
+    return;
+  }
   setStatus(`正在生成 ${keyword} 的策略...`);
 
   try {
     const data = await fetchJson(`/api/strategy?query=${encodeURIComponent(keyword)}`);
     renderAll(data);
-    setStatus(`已完成 ${data.stock.name} 的规则策略分析 · 数据源 ${data.meta.source === "live-quote" ? "实时行情" : "本地样本池"}`);
+    localStorage.setItem(LAST_STOCK_KEY, data.stock.code);
+    setStatus(
+      `已完成 ${data.stock.name} 的规则策略分析 · 数据源 ${data.meta.source === "live-quote" ? "实时行情" : "样本兜底"} · 来源 ${data.meta.provider}`
+    );
     renderSuggestions([]);
   } catch (error) {
     renderSuggestions(error.payload?.suggestions || []);
@@ -671,18 +838,35 @@ function bindSearch() {
   $("#stockQuery").addEventListener("keydown", (event) => {
     if (event.key === "Enter") analyze();
   });
-  $("#stockQuery").addEventListener("input", async (event) => {
-    const value = event.target.value.trim();
-    if (!value) {
-      renderSuggestions([]);
-      return;
-    }
-    try {
-      const data = await fetchJson(`/api/stocks?query=${encodeURIComponent(value)}`);
-      renderSuggestions(data.stocks);
-    } catch {
-      renderSuggestions([]);
-    }
+  let searchTimer = null;
+  let searchAbort = null;
+  $("#stockQuery").addEventListener("input", (event) => {
+    clearTimeout(searchTimer);
+    if (searchAbort) searchAbort.abort();
+    searchTimer = setTimeout(async () => {
+      const value = event.target.value.trim();
+      if (!value) {
+        renderSuggestions([]);
+        return;
+      }
+      searchAbort = new AbortController();
+      try {
+        const response = await fetch(`/api/stocks?query=${encodeURIComponent(value)}`, {
+          signal: searchAbort.signal
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "搜索失败");
+        }
+        renderSuggestions(data.stocks || []);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          renderSuggestions([]);
+        }
+      } finally {
+        searchAbort = null;
+      }
+    }, 120);
   });
 }
 
@@ -726,9 +910,14 @@ async function init() {
     await syncCloudState();
     renderAuth();
     await initNotifications();
-    await loadStocks();
-    $("#stockQuery").value = "600519";
-    await analyze("600519");
+    // await loadStocks(); // disabled - no stock pool quick picks
+    const lastStock = localStorage.getItem(LAST_STOCK_KEY);
+    if (lastStock) {
+      $("#stockQuery").value = lastStock;
+      await analyze(lastStock);
+    } else {
+      setStatus("输入代码或名称，开始生成策略");
+    }
     setMonitorEnabled(true);
   } catch (error) {
     setStatus(error.message);

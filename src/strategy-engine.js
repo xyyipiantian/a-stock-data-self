@@ -189,7 +189,7 @@ async function findRemoteByCode(code) {
 }
 
 function tencentPrefixedCode(code) {
-  if (code.startsWith(("6", "9"))) return `sh${code}`;
+  if (code.startsWith("6") || code.startsWith("9")) return `sh${code}`;
   if (code.startsWith("8")) return `bj${code}`;
   return `sz${code}`;
 }
@@ -232,6 +232,34 @@ async function fetchTencentQuote(code) {
   };
 }
 
+
+async function fetchSinaQuote(code) {
+  const prefix = tencentPrefixedCode(code);
+  const url = `https://hq.sinajs.cn/list=${prefix}`;
+  const response = await fetch(url, {
+    headers: {
+      "Referer": "https://finance.sina.com.cn",
+      "User-Agent": UA
+    }
+  });
+  const bytes = await response.arrayBuffer();
+  const raw = new TextDecoder("gbk").decode(bytes);
+  const match = raw.match(/="([^"]+)"/);
+  if (!match) throw new Error("新浪行情解析失败");
+  const vals = match[1].split(",");
+  if (vals.length < 3) throw new Error("新浪行情字段不足");
+  return {
+    name: vals[0],
+    price: Number(vals[3]) || 0,
+    lastClose: Number(vals[2]) || 0,
+    open: Number(vals[1]) || 0,
+    changePct: vals[2] > 0 ? ((Number(vals[3]) - Number(vals[2])) / Number(vals[2]) * 100) : 0,
+    high: Number(vals[4]) || 0,
+    low: Number(vals[5]) || 0,
+    volume: Number(vals[8]) || 0,
+    amountWan: Number(vals[9]) / 10000 || 0
+  };
+}
 async function fetchEastmoneyStockInfo(code) {
   const marketCode = code.startsWith("6") ? 1 : 0;
   const url =
@@ -249,7 +277,7 @@ async function fetchEastmoneyStockInfo(code) {
     code: data.f57 || code,
     name: data.f58 || "",
     industry: data.f127 || "A股",
-    price: Number(data.f43) / 100 || 0
+    price: Number(data.f43) || 0
   };
 }
 
@@ -261,6 +289,81 @@ function growthPresetBySector(sector) {
   if (/(银行|保险|红利)/.test(text)) return 0.08;
   if (/(有色|资源|黄金|铜)/.test(text)) return 0.12;
   return 0.16;
+}
+
+
+
+function relativeDiff(a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b === 0) return Infinity;
+  return Math.abs(a - b) / Math.abs(b);
+}
+
+function isQuoteUsable(quote) {
+  return Boolean(quote && Number.isFinite(quote.price) && quote.price > 0);
+}
+
+function selectBestQuoteCandidate(candidates, referencePrice, validatorPrice) {
+  if (!candidates.length) return null;
+  if (Number.isFinite(validatorPrice) && validatorPrice > 0) {
+    const matched = candidates.find((item) => relativeDiff(item.quote.price, validatorPrice) <= 0.35);
+    if (matched) return matched;
+  }
+  if (Number.isFinite(referencePrice) && referencePrice > 0) {
+    const matched = candidates.find((item) => relativeDiff(item.quote.price, referencePrice) <= 0.6);
+    if (matched) return matched;
+  }
+  return candidates[0];
+}
+
+async function fetchLiveQuoteWithFallback(code, referencePrice = 0, validatorPrice = 0) {
+  const candidates = [];
+  const errors = [];
+
+  try {
+    const quote = await fetchTencentQuote(code);
+    if (isQuoteUsable(quote)) candidates.push({ provider: "tencent", quote });
+  } catch (error) {
+    errors.push(`tencent:${error.message}`);
+  }
+
+  try {
+    const quote = await fetchSinaQuote(code);
+    if (isQuoteUsable(quote)) candidates.push({ provider: "sina", quote });
+  } catch (error) {
+    errors.push(`sina:${error.message}`);
+  }
+
+  const selected = selectBestQuoteCandidate(candidates, referencePrice, validatorPrice);
+  if (!selected) {
+    return {
+      quote: null,
+      provider: "sample",
+      warning: "实时行情获取失败，已回退到本地样本价。",
+      errors
+    };
+  }
+
+  let warning = "";
+  let price = selected.quote.price;
+  let provider = selected.provider;
+
+  if (Number.isFinite(validatorPrice) && validatorPrice > 0 && relativeDiff(price, validatorPrice) > 0.35) {
+    price = validatorPrice;
+    provider = `${provider}+eastmoney`;
+    warning = "多源价格差异较大，已按校验源修正展示价格。";
+  } else if (Number.isFinite(referencePrice) && referencePrice > 0 && relativeDiff(price, referencePrice) > 0.6) {
+    warning = "实时价格与本地样本差异较大，请结合交易软件二次确认。";
+  }
+
+  return {
+    quote: {
+      ...selected.quote,
+      price
+    },
+    provider,
+    warning,
+    errors
+  };
 }
 
 function buildRemoteStockProfile(searchHit, quote, info) {
@@ -498,7 +601,10 @@ function analyzeStock(stock) {
       analysisMode: "rule-engine",
       updatedAt: new Date().toISOString(),
       universeSize: stockUniverse.length,
-      source: stock._source || "local-universe"
+      source: stock._source || "local-universe",
+      provider: stock._provider || (stock._source === "live-quote" ? "live" : "sample"),
+      warning: stock._warning || "",
+      errors: stock._errors || []
     }
   };
 }
@@ -507,7 +613,10 @@ async function findStock(query) {
   const normalized = normalizeCode(query);
   if (normalized) {
     const exactByCode = stockUniverse.find((stock) => stock.code === normalized);
-    if (exactByCode) return exactByCode;
+    if (exactByCode) {
+      const liveByCode = await buildLiveProfileByCode(exactByCode.code);
+      return liveByCode || exactByCode;
+    }
   }
 
   const text = String(query || "").trim().toLowerCase();
@@ -515,10 +624,18 @@ async function findStock(query) {
     const exactLocal =
       stockUniverse.find((stock) => stock.name.toLowerCase() === text || stock.code === normalized) ||
       stockUniverse.find((stock) => stock.name.toLowerCase().includes(text) || stock.sector.toLowerCase().includes(text));
-    if (exactLocal) return exactLocal;
+    if (exactLocal) {
+      const liveLocal = await buildLiveProfileByCode(exactLocal.code);
+      return liveLocal || exactLocal;
+    }
   }
 
-  const remoteMatches = await remoteSuggest(query);
+  let remoteMatches;
+  try {
+    remoteMatches = await remoteSuggest(query);
+  } catch {
+    return null;
+  }
   const best = normalized ? remoteMatches.find((item) => item.code === normalized) || remoteMatches[0] : remoteMatches[0];
   if (!best) return null;
 
@@ -526,9 +643,28 @@ async function findStock(query) {
 }
 
 async function buildLiveProfileFromSearchHit(best) {
-  const [quote, info] = await Promise.all([fetchTencentQuote(best.code), fetchEastmoneyStockInfo(best.code)]);
+  let quote, info, provider = "sample", warning = "";
+  try {
+    [quote, info] = await Promise.all([fetchTencentQuote(best.code), fetchEastmoneyStockInfo(best.code)]);
+    provider = "tencent+eastmoney";
+  } catch {
+    try {
+      quote = await fetchSinaQuote(best.code);
+      info = { code: best.code, name: best.name, industry: best.sector || "A股", price: 0 };
+      provider = "sina";
+    } catch {
+      return null;
+    }
+  }
+  if ((!quote.price || quote.price <= 0) && info?.price > 0) {
+    quote.price = info.price;
+    provider = `${provider}+eastmoney`;
+    warning = "主行情源价格缺失，已按校验源补齐。";
+  }
   const remoteProfile = buildRemoteStockProfile(best, quote, info);
   remoteProfile._source = "live-quote";
+  remoteProfile._provider = provider;
+  remoteProfile._warning = warning;
   return remoteProfile;
 }
 
@@ -537,18 +673,33 @@ async function buildLiveProfileByCode(code) {
   if (!normalized) return null;
   const local = stockUniverse.find((item) => item.code === normalized);
   if (local) {
+    let validatorPrice = 0;
     try {
-      const quote = await fetchTencentQuote(normalized);
+      const info = await fetchEastmoneyStockInfo(normalized);
+      validatorPrice = info.price || 0;
+    } catch {
+      validatorPrice = 0;
+    }
+    const live = await fetchLiveQuoteWithFallback(normalized, local.price, validatorPrice);
+    if (!live.quote) {
       return {
         ...local,
-        price: quote.price || local.price,
-        dayChangePct: quote.changePct || local.dayChangePct,
-        volumeRatio: quote.volumeRatio || local.volumeRatio,
-        _source: "live-quote"
+        _source: "local-universe",
+        _provider: "sample",
+        _warning: live.warning,
+        _errors: live.errors
       };
-    } catch {
-      return { ...local, _source: "local-universe" };
     }
+    return {
+      ...local,
+      price: live.quote.price || local.price,
+      dayChangePct: live.quote.changePct || local.dayChangePct,
+      volumeRatio: live.quote.volumeRatio || local.volumeRatio,
+      _source: "live-quote",
+      _provider: live.provider,
+      _warning: live.warning,
+      _errors: live.errors
+    };
   }
 
   const hit = await findRemoteByCode(normalized);
@@ -557,22 +708,32 @@ async function buildLiveProfileByCode(code) {
 }
 
 async function searchStocks(query) {
+  const keyword = String(query || "").trim();
   const locals = localMatches(query).slice(0, 8);
+  if (!keyword) {
+    return locals;
+  }
+
+  const exactLocal = locals.find(
+    (item) => item.name === keyword || item.code === normalizeCode(keyword)
+  );
+  if (exactLocal || locals.length >= 5) {
+    return locals;
+  }
+
   const seen = new Set(locals.map((item) => item.code));
   let merged = [...locals];
 
-  if (String(query || "").trim()) {
-    try {
-      const remotes = await remoteSuggest(query);
-      for (const item of remotes) {
-        if (seen.has(item.code)) continue;
-        merged.push(item);
-        seen.add(item.code);
-        if (merged.length >= 8) break;
-      }
-    } catch {
-      // Keep local results if remote suggestion fails.
+  try {
+    const remotes = await remoteSuggest(query);
+    for (const item of remotes) {
+      if (seen.has(item.code)) continue;
+      merged.push(item);
+      seen.add(item.code);
+      if (merged.length >= 8) break;
     }
+  } catch {
+    // Keep local results if remote suggestion fails.
   }
 
   return merged.slice(0, 8);
