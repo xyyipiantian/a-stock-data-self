@@ -158,7 +158,7 @@
           <form id="portfolioForm" class="portfolio-form">
             <label class="channel-field">
               <span>股票代码或名称</span>
-              <input id="portfolioCodeInput" type="text" placeholder="例如 002639 / 雪人集团" />
+              <input id="portfolioCodeInput" type="text" placeholder="例如 002639 / 雪人集团" autocomplete="off" />
             </label>
             <label class="channel-field">
               <span>持股数量</span>
@@ -172,7 +172,8 @@
               <span>备注</span>
               <input id="portfolioNotesInput" type="text" placeholder="例如 满仓 / 波段 / 长线观察" />
             </label>
-            <div class="channel-actions">
+            <div class="suggestion-list portfolio-suggestion-list" id="portfolioSuggestionList"></div>
+            <div class="portfolio-form-actions">
               <button class="primary-button compact" id="savePortfolioButton" type="submit">保存到模拟仓</button>
               <button class="secondary-button compact" id="generateBriefingButton" type="button">生成今日发言</button>
               <p id="portfolioStatus">登录后持仓会保存在你自己的账号下；未登录时保存在当前浏览器。</p>

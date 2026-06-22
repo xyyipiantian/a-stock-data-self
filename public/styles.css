@@ -613,6 +613,25 @@ dt {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.portfolio-suggestion-list,
+.portfolio-form-actions {
+  grid-column: 1 / -1;
+}
+
+.portfolio-form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+#portfolioStatus {
+  margin: 0;
+  color: var(--ink-700);
+  line-height: 1.6;
+  flex: 1 1 260px;
+}
+
 .portfolio-summary {
   margin-top: 18px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -909,6 +928,14 @@ dt {
   .portfolio-summary,
   .portfolio-grid {
     grid-template-columns: 1fr;
+  }
+
+  .portfolio-form-actions {
+    align-items: stretch;
+  }
+
+  #portfolioStatus {
+    flex-basis: auto;
   }
 
   .primary-button {

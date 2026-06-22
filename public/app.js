@@ -523,6 +523,26 @@ function renderSuggestions(stocks) {
   });
 }
 
+function renderPortfolioSuggestions(stocks) {
+  const container = $("#portfolioSuggestionList");
+  container.innerHTML = stocks.length
+    ? stocks
+        .map(
+          (stock) =>
+            `<button class="suggestion-chip" type="button" data-code="${stock.code}" data-name="${escapeHtml(stock.name)}">${stock.code} · ${escapeHtml(stock.name)} · ${escapeHtml(stock.sector)}</button>`
+        )
+        .join("")
+    : "";
+
+  container.querySelectorAll(".suggestion-chip").forEach((button) => {
+    button.addEventListener("click", () => {
+      $("#portfolioCodeInput").value = `${button.dataset.code} / ${button.dataset.name}`;
+      renderPortfolioSuggestions([]);
+      $("#portfolioStatus").textContent = `已选中 ${button.dataset.name} ${button.dataset.code}，继续填写股数和成本即可。`;
+    });
+  });
+}
+
 function renderSummary(data) {
   const sourceLabel = data.meta.source === "live-quote" ? "实时行情" : "样本兜底";
   $("#stockTitle").textContent = `${data.stock.name} ${data.stock.code}`;
@@ -982,7 +1002,7 @@ function findPortfolioPosition(code) {
 function loadPortfolioForm(code) {
   const item = findPortfolioPosition(code);
   if (!item) return;
-  $("#portfolioCodeInput").value = item.code;
+  $("#portfolioCodeInput").value = `${item.code} / ${item.name}`;
   $("#portfolioSharesInput").value = item.shares;
   $("#portfolioCostInput").value = item.costBasis;
   $("#portfolioNotesInput").value = item.notes || "";
@@ -1025,7 +1045,8 @@ async function savePortfolioTrade(position, action, note) {
 async function savePortfolioPosition(event) {
   event.preventDefault();
 
-  const query = $("#portfolioCodeInput").value.trim();
+  const rawQuery = $("#portfolioCodeInput").value.trim();
+  const query = rawQuery.split("/")[0].trim();
   const shares = Number($("#portfolioSharesInput").value);
   const costBasis = Number($("#portfolioCostInput").value);
   const notes = $("#portfolioNotesInput").value.trim();
@@ -1374,15 +1395,45 @@ function bindWatchlist() {
 
 function bindPortfolio() {
   $("#portfolioForm").addEventListener("submit", (event) => {
-    savePortfolioPosition(event).catch((error) => {
-      $("#portfolioStatus").textContent = error.message;
+      savePortfolioPosition(event).catch((error) => {
+        $("#portfolioStatus").textContent = error.message;
+      });
     });
+  let portfolioSearchTimer = null;
+  let portfolioSearchAbort = null;
+  $("#portfolioCodeInput").addEventListener("input", (event) => {
+    clearTimeout(portfolioSearchTimer);
+    if (portfolioSearchAbort) portfolioSearchAbort.abort();
+    portfolioSearchTimer = setTimeout(async () => {
+      const value = event.target.value.trim();
+      if (!value) {
+        renderPortfolioSuggestions([]);
+        return;
+      }
+      portfolioSearchAbort = new AbortController();
+      try {
+        const response = await fetch(`/api/stocks?query=${encodeURIComponent(value)}`, {
+          signal: portfolioSearchAbort.signal
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "搜索失败");
+        }
+        renderPortfolioSuggestions(data.stocks || []);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          renderPortfolioSuggestions([]);
+        }
+      } finally {
+        portfolioSearchAbort = null;
+      }
+    }, 120);
   });
   $("#generateBriefingButton").addEventListener("click", () => {
-    generatePortfolioBriefing().catch((error) => {
-      $("#portfolioStatus").textContent = error.message;
+      generatePortfolioBriefing().catch((error) => {
+        $("#portfolioStatus").textContent = error.message;
+      });
     });
-  });
 }
 
 function bindAuth() {
