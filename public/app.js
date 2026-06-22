@@ -773,8 +773,15 @@ function renderPortfolioSummary() {
     { marketValue: 0, costValue: 0, pnlAmount: 0, defensiveCount: 0 }
   );
   const pnlPct = totals.costValue > 0 ? (totals.pnlAmount / totals.costValue) * 100 : 0;
+  const strongest = [...validItems].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))[0];
+  const weakest = [...validItems].sort((a, b) => (a.totalScore || 0) - (b.totalScore || 0))[0];
 
   $("#portfolioSummary").innerHTML = `
+    <article class="portfolio-summary-card">
+      <span class="section-label">持仓数量</span>
+      <strong>${validItems.length}</strong>
+      <p class="position-footnote">${validItems.length ? `当前跟踪 ${validItems.map((item) => item.name).slice(0, 2).join("、")}${validItems.length > 2 ? " 等" : ""}` : "先录入第一笔持仓"}</p>
+    </article>
     <article class="portfolio-summary-card">
       <span class="section-label">持仓市值</span>
       <strong>${formatPrice(totals.marketValue)}</strong>
@@ -791,7 +798,12 @@ function renderPortfolioSummary() {
     <article class="portfolio-summary-card">
       <span class="section-label">防守提示</span>
       <strong>${totals.defensiveCount}</strong>
-      <p class="position-footnote">当前需重点处理的持仓数量</p>
+      <p class="position-footnote">${strongest ? `相对偏强：${strongest.name}` : "当前需重点处理的持仓数量"}</p>
+    </article>
+    <article class="portfolio-summary-card">
+      <span class="section-label">关注对象</span>
+      <strong>${weakest ? weakest.name : "-"}</strong>
+      <p class="position-footnote">${weakest ? `当前总分 ${weakest.totalScore?.toFixed(1)}` : "等待持仓录入后生成"}</p>
     </article>
   `;
 }
@@ -815,32 +827,59 @@ function renderPortfolioList() {
             `;
           }
 
-          return `
-            <article class="portfolio-item">
-              <div class="portfolio-grid">
-                <div>
-                  <div class="portfolio-item-head">
+            return `
+              <article class="portfolio-item">
+                <div class="portfolio-grid">
+                  <div>
+                    <div class="portfolio-item-head">
                     <div>
                       <strong>${escapeHtml(item.name)} ${item.code}</strong>
                       <p>${escapeHtml(item.notes || "模拟仓跟踪中")}</p>
                     </div>
                     <span class="severity-pill severity-${item.advice?.level === "defensive" ? "medium" : item.advice?.level === "positive" ? "high" : "low"}">${escapeHtml(item.advice?.label || "观察")}</span>
                   </div>
-                  <div class="portfolio-price-row">
-                    <strong>${formatPrice(item.currentPrice)}</strong>
-                    <span class="${item.pnlAmount >= 0 ? "price-up" : "price-down"}">${formatSignedMoney(item.pnlAmount)} / ${formatPct(item.pnlPct)}</span>
-                  </div>
-                  <div class="tag-list">
-                    <span class="metric-pill">股数 ${item.shares}</span>
-                    <span class="metric-pill">成本 ${formatPrice(item.costBasis)}</span>
-                    <span class="metric-pill">总分 ${item.totalScore?.toFixed(1)}</span>
-                    <span class="metric-pill">支撑 ${formatPrice(item.supportPrice)}</span>
-                    <span class="metric-pill">压力 ${formatPrice(item.resistancePrice)}</span>
-                  </div>
-                  <div class="portfolio-actions">
-                    <button data-action="fill-form" data-code="${item.code}">载入到表单</button>
-                    <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
-                    <button data-action="remove-portfolio" data-code="${item.code}">删除持仓</button>
+                    <div class="portfolio-price-row">
+                      <strong>${formatPrice(item.currentPrice)}</strong>
+                      <span class="${item.pnlAmount >= 0 ? "price-up" : "price-down"}">${formatSignedMoney(item.pnlAmount)} / ${formatPct(item.pnlPct)}</span>
+                    </div>
+                    <div class="portfolio-metric-grid">
+                      <div class="portfolio-metric">
+                        <span>持股数量</span>
+                        <strong>${item.shares}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>持仓成本</span>
+                        <strong>${formatPrice(item.costBasis)}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>策略总分</span>
+                        <strong>${item.totalScore?.toFixed(1)}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>当前市值</span>
+                        <strong>${formatPrice(item.marketValue)}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>支撑位</span>
+                        <strong>${formatPrice(item.supportPrice)}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>压力位</span>
+                        <strong>${formatPrice(item.resistancePrice)}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>观点</span>
+                        <strong>${escapeHtml(item.stance || "-")}</strong>
+                      </div>
+                      <div class="portfolio-metric">
+                        <span>动作标签</span>
+                        <strong>${escapeHtml(item.advice?.label || "观察")}</strong>
+                      </div>
+                    </div>
+                    <div class="portfolio-actions">
+                      <button data-action="fill-form" data-code="${item.code}">载入到表单</button>
+                      <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
+                      <button data-action="remove-portfolio" data-code="${item.code}">删除持仓</button>
                   </div>
                 </div>
                 <div class="portfolio-advice ${escapeHtml(item.advice?.level || "neutral")}">
@@ -851,9 +890,11 @@ function renderPortfolioList() {
               </div>
             </article>
           `;
-        })
-        .join("")
-    : `<div class="empty-state">${cloudEnabled() ? "你的在线模拟仓还是空的。填代码、股数和成本后，就能看到每日建议。" : "本地模拟仓还是空的。先录入一笔持仓，系统就会开始给出建议。"}</div>`;
+          })
+          .join("")
+    : state.portfolio.length
+      ? `<div class="empty-state">持仓已经录入，系统正在同步和计算建议。如果长时间不显示，请点一次“生成今日发言”或刷新页面。</div>`
+      : `<div class="empty-state">${cloudEnabled() ? "你的在线模拟仓还是空的。填代码、股数和成本后，就能看到每日建议。" : "本地模拟仓还是空的。先录入一笔持仓，系统就会开始给出建议。"}</div>`;
 
   document.querySelectorAll("#portfolioList button").forEach((button) => {
     if (button.dataset.action === "analyze") {
@@ -1112,6 +1153,9 @@ async function savePortfolioPosition(event) {
   }
 
   $("#portfolioStatus").textContent = `${position.name} 已保存到${cloudEnabled() ? "你的在线" : "本地"}模拟仓。`;
+  if (state.portfolio.length || cloudEnabled()) {
+    generatePortfolioBriefing().catch(() => {});
+  }
 }
 
 async function removePortfolioPosition(code) {
