@@ -49,9 +49,39 @@ create table if not exists public.alert_logs (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.portfolio_positions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code text not null,
+  name text not null,
+  shares numeric not null default 0 check (shares >= 0),
+  cost_basis numeric not null default 0 check (cost_basis >= 0),
+  notes text default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists portfolio_positions_user_code_key
+  on public.portfolio_positions(user_id, code);
+
+create table if not exists public.portfolio_trades (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  position_id uuid references public.portfolio_positions(id) on delete set null,
+  code text not null,
+  name text not null,
+  action text not null check (action in ('snapshot', 'adjust', 'close')),
+  shares numeric not null default 0,
+  price numeric not null default 0,
+  note text default '',
+  created_at timestamptz not null default now()
+);
+
 alter table public.watchlists enable row level security;
 alter table public.notification_channels enable row level security;
 alter table public.alert_logs enable row level security;
+alter table public.portfolio_positions enable row level security;
+alter table public.portfolio_trades enable row level security;
 
 create policy "watchlists owner select"
   on public.watchlists for select
@@ -91,6 +121,31 @@ create policy "alert logs owner select"
   on public.alert_logs for select
   using (auth.uid() = user_id);
 
+create policy "portfolio positions owner select"
+  on public.portfolio_positions for select
+  using (auth.uid() = user_id);
+
+create policy "portfolio positions owner insert"
+  on public.portfolio_positions for insert
+  with check (auth.uid() = user_id);
+
+create policy "portfolio positions owner update"
+  on public.portfolio_positions for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "portfolio positions owner delete"
+  on public.portfolio_positions for delete
+  using (auth.uid() = user_id);
+
+create policy "portfolio trades owner select"
+  on public.portfolio_trades for select
+  using (auth.uid() = user_id);
+
+create policy "portfolio trades owner insert"
+  on public.portfolio_trades for insert
+  with check (auth.uid() = user_id);
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -109,4 +164,9 @@ for each row execute procedure public.set_updated_at();
 drop trigger if exists notification_channels_set_updated_at on public.notification_channels;
 create trigger notification_channels_set_updated_at
 before update on public.notification_channels
+for each row execute procedure public.set_updated_at();
+
+drop trigger if exists portfolio_positions_set_updated_at on public.portfolio_positions;
+create trigger portfolio_positions_set_updated_at
+before update on public.portfolio_positions
 for each row execute procedure public.set_updated_at();

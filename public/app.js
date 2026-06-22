@@ -6,6 +6,10 @@ const state = {
   currentAnalysis: null,
   watchlist: [],
   alerts: [],
+  portfolio: [],
+  portfolioInsights: [],
+  portfolioTrades: [],
+  portfolioBriefing: null,
   channels: {
     feishu: "",
     wecom: ""
@@ -21,6 +25,8 @@ const state = {
 const WATCHLIST_KEY = "alpha-lens-watchlist-v1";
 const ALERT_LOG_KEY = "alpha-lens-alert-log-v1";
 const LAST_STOCK_KEY = "alpha-lens-last-stock-v1";
+const PORTFOLIO_KEY = "alpha-lens-portfolio-v1";
+const PORTFOLIO_TRADES_KEY = "alpha-lens-portfolio-trades-v1";
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -83,6 +89,10 @@ function cloudEnabled() {
   return Boolean(state.auth.client && state.auth.user);
 }
 
+function opportunityAlertsEnabled() {
+  return Boolean(state.auth.config?.opportunityAlertsEnabled);
+}
+
 function getChinaTradingWindowState(now = new Date()) {
   const chinaNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Shanghai" }));
   const day = chinaNow.getDay();
@@ -112,6 +122,14 @@ function persistLocalAlerts() {
   localStorage.setItem(ALERT_LOG_KEY, JSON.stringify(state.alerts.slice(0, 30)));
 }
 
+function persistLocalPortfolio() {
+  localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(state.portfolio));
+}
+
+function persistLocalPortfolioTrades() {
+  localStorage.setItem(PORTFOLIO_TRADES_KEY, JSON.stringify(state.portfolioTrades.slice(0, 50)));
+}
+
 function loadLocalState() {
   try {
     state.watchlist = JSON.parse(localStorage.getItem(WATCHLIST_KEY) || "[]");
@@ -122,6 +140,16 @@ function loadLocalState() {
     state.alerts = JSON.parse(localStorage.getItem(ALERT_LOG_KEY) || "[]");
   } catch {
     state.alerts = [];
+  }
+  try {
+    state.portfolio = JSON.parse(localStorage.getItem(PORTFOLIO_KEY) || "[]");
+  } catch {
+    state.portfolio = [];
+  }
+  try {
+    state.portfolioTrades = JSON.parse(localStorage.getItem(PORTFOLIO_TRADES_KEY) || "[]");
+  } catch {
+    state.portfolioTrades = [];
   }
 }
 
@@ -153,6 +181,31 @@ function mapDbAlert(row) {
   };
 }
 
+function mapDbPortfolioPosition(row) {
+  return {
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    shares: Number(row.shares),
+    costBasis: Number(row.cost_basis),
+    notes: row.notes || ""
+  };
+}
+
+function mapDbPortfolioTrade(row) {
+  return {
+    id: row.id,
+    positionId: row.position_id,
+    code: row.code,
+    name: row.name,
+    action: row.action,
+    shares: Number(row.shares),
+    price: Number(row.price),
+    note: row.note || "",
+    createdAt: row.created_at
+  };
+}
+
 async function loadRuntimeConfig() {
   state.auth.config = await fetchJson("/api/runtime-config");
 }
@@ -177,14 +230,18 @@ async function syncCloudState() {
     loadLocalState();
     renderWatchlist();
     renderOpportunityLog();
+    await refreshPortfolioInsights();
+    renderPortfolioTrades();
     renderChannels();
     return;
   }
 
-  const [watchRes, alertRes, channelRes] = await Promise.all([
+  const [watchRes, alertRes, channelRes, portfolioRes, tradeRes] = await Promise.all([
     state.auth.client.from("watchlists").select("*").order("created_at", { ascending: false }),
     state.auth.client.from("alert_logs").select("*").order("created_at", { ascending: false }).limit(20),
-    state.auth.client.from("notification_channels").select("*")
+    state.auth.client.from("notification_channels").select("*"),
+    state.auth.client.from("portfolio_positions").select("*").order("updated_at", { ascending: false }),
+    state.auth.client.from("portfolio_trades").select("*").order("created_at", { ascending: false }).limit(20)
   ]);
 
   var cloudWatchlist = (watchRes.data || []).map(mapDbWatchlist);
@@ -206,6 +263,8 @@ async function syncCloudState() {
     });
     state.watchlist = cloudWatchlist.concat(localItems.filter(function(x) { return !cloudCodes.has(x.code); }));
   state.alerts = (alertRes.data || []).map(mapDbAlert);
+  state.portfolio = (portfolioRes.data || []).map(mapDbPortfolioPosition);
+  state.portfolioTrades = (tradeRes.data || []).map(mapDbPortfolioTrade);
   state.channels = {
     feishu: channelRes.data?.find((item) => item.provider === "feishu")?.webhook_url || "",
     wecom: channelRes.data?.find((item) => item.provider === "wecom")?.webhook_url || ""
@@ -214,6 +273,8 @@ async function syncCloudState() {
   renderWatchlist();
   renderOpportunityLog();
   renderAlertStrip();
+  await refreshPortfolioInsights();
+  renderPortfolioTrades();
   renderChannels();
 }
 
@@ -252,6 +313,12 @@ function renderAuth() {
 }
 
 function renderChannels() {
+  if (!opportunityAlertsEnabled()) {
+    $("#feishuWebhookInput").value = state.channels.feishu || "";
+    $("#wecomWebhookInput").value = state.channels.wecom || "";
+    $("#channelStatus").textContent = "机会提醒当前已关闭，飞书 / 企业微信渠道暂不发送机会监控消息。";
+    return;
+  }
   $("#feishuWebhookInput").value = state.channels.feishu || "";
   $("#wecomWebhookInput").value = state.channels.wecom || "";
   $("#channelStatus").textContent = cloudEnabled()
@@ -329,6 +396,7 @@ async function sendChannelTestMessages(feishu, wecom) {
 }
 
 async function notifyChannelsForAlert(alert) {
+  if (!opportunityAlertsEnabled()) return;
   const tasks = [];
   const text = buildWebhookMessage(`${alert.name} ${alert.code} · ${alert.signal}`, [
     `价格 ${formatPrice(alert.price)} (${formatPct(alert.changePct)})`,
@@ -361,11 +429,17 @@ async function signOut() {
   renderAuth();
   renderWatchlist();
   renderOpportunityLog();
+  await refreshPortfolioInsights();
+  renderPortfolioTrades();
   renderChannels();
 }
 
 async function saveChannels(event) {
   event.preventDefault();
+  if (!opportunityAlertsEnabled()) {
+    $("#channelStatus").textContent = "机会提醒当前已关闭，不需要再配置飞书 / 企业微信。";
+    return;
+  }
   if (!cloudEnabled()) {
     $("#channelStatus").textContent = "请先登录，再保存你的提醒渠道。";
     return;
@@ -560,6 +634,10 @@ function renderTimeline(data) {
 }
 
 function renderAlertStrip() {
+  if (!opportunityAlertsEnabled()) {
+    $("#alertStrip").hidden = true;
+    return;
+  }
   const topAlert = state.alerts[0];
   const strip = $("#alertStrip");
   if (!topAlert) {
@@ -582,6 +660,11 @@ async function openStockAnalysis(code) {
 }
 
 function renderWatchlist() {
+  if (!opportunityAlertsEnabled()) {
+    $("#watchlist").innerHTML = `<div class="empty-state">机会提醒已关闭，当前页面改为以模拟仓和每日发言为主。</div>`;
+    $("#monitorStatus").textContent = "机会提醒已关闭";
+    return;
+  }
   $("#watchlist").innerHTML = state.watchlist.length
     ? state.watchlist
         .map(
@@ -622,6 +705,10 @@ function renderWatchlist() {
 }
 
 function renderOpportunityLog() {
+  if (!opportunityAlertsEnabled()) {
+    $("#opportunityLog").innerHTML = `<div class="empty-state">机会提醒已关闭，不再记录这类弱信号日志。</div>`;
+    return;
+  }
   $("#opportunityLog").innerHTML = state.alerts.length
     ? state.alerts
         .map(
@@ -648,6 +735,226 @@ function renderOpportunityLog() {
   });
 }
 
+function formatSignedMoney(value) {
+  const number = Number(value || 0);
+  return `${number >= 0 ? "+" : "-"}${Math.abs(number).toFixed(2)}`;
+}
+
+function renderPortfolioSummary() {
+  const validItems = state.portfolioInsights.filter((item) => !item.error);
+  const totals = validItems.reduce(
+    (acc, item) => {
+      acc.marketValue += Number(item.marketValue || 0);
+      acc.costValue += Number(item.costValue || 0);
+      acc.pnlAmount += Number(item.pnlAmount || 0);
+      acc.defensiveCount += item.advice?.level === "defensive" ? 1 : 0;
+      return acc;
+    },
+    { marketValue: 0, costValue: 0, pnlAmount: 0, defensiveCount: 0 }
+  );
+  const pnlPct = totals.costValue > 0 ? (totals.pnlAmount / totals.costValue) * 100 : 0;
+
+  $("#portfolioSummary").innerHTML = `
+    <article class="portfolio-summary-card">
+      <span class="section-label">持仓市值</span>
+      <strong>${formatPrice(totals.marketValue)}</strong>
+    </article>
+    <article class="portfolio-summary-card">
+      <span class="section-label">持仓成本</span>
+      <strong>${formatPrice(totals.costValue)}</strong>
+    </article>
+    <article class="portfolio-summary-card">
+      <span class="section-label">浮动盈亏</span>
+      <strong class="${totals.pnlAmount >= 0 ? "price-up" : "price-down"}">${formatSignedMoney(totals.pnlAmount)}</strong>
+      <p class="position-footnote">${formatPct(pnlPct)}</p>
+    </article>
+    <article class="portfolio-summary-card">
+      <span class="section-label">防守提示</span>
+      <strong>${totals.defensiveCount}</strong>
+      <p class="position-footnote">当前需重点处理的持仓数量</p>
+    </article>
+  `;
+}
+
+function renderPortfolioList() {
+  $("#portfolioList").innerHTML = state.portfolioInsights.length
+    ? state.portfolioInsights
+        .map((item) => {
+          if (item.error) {
+            return `
+              <article class="portfolio-item">
+                <div class="portfolio-item-head">
+                  <div>
+                    <strong>${escapeHtml(item.name || item.code)}</strong>
+                    <p>${escapeHtml(item.code)}</p>
+                  </div>
+                  <span class="severity-pill severity-error">异常</span>
+                </div>
+                <p>${escapeHtml(item.error)}</p>
+              </article>
+            `;
+          }
+
+          return `
+            <article class="portfolio-item">
+              <div class="portfolio-grid">
+                <div>
+                  <div class="portfolio-item-head">
+                    <div>
+                      <strong>${escapeHtml(item.name)} ${item.code}</strong>
+                      <p>${escapeHtml(item.notes || "模拟仓跟踪中")}</p>
+                    </div>
+                    <span class="severity-pill severity-${item.advice?.level === "defensive" ? "medium" : item.advice?.level === "positive" ? "high" : "low"}">${escapeHtml(item.advice?.label || "观察")}</span>
+                  </div>
+                  <div class="portfolio-price-row">
+                    <strong>${formatPrice(item.currentPrice)}</strong>
+                    <span class="${item.pnlAmount >= 0 ? "price-up" : "price-down"}">${formatSignedMoney(item.pnlAmount)} / ${formatPct(item.pnlPct)}</span>
+                  </div>
+                  <div class="tag-list">
+                    <span class="metric-pill">股数 ${item.shares}</span>
+                    <span class="metric-pill">成本 ${formatPrice(item.costBasis)}</span>
+                    <span class="metric-pill">总分 ${item.totalScore?.toFixed(1)}</span>
+                    <span class="metric-pill">支撑 ${formatPrice(item.supportPrice)}</span>
+                    <span class="metric-pill">压力 ${formatPrice(item.resistancePrice)}</span>
+                  </div>
+                  <div class="portfolio-actions">
+                    <button data-action="fill-form" data-code="${item.code}">载入到表单</button>
+                    <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
+                    <button data-action="remove-portfolio" data-code="${item.code}">删除持仓</button>
+                  </div>
+                </div>
+                <div class="portfolio-advice ${escapeHtml(item.advice?.level || "neutral")}">
+                  <strong>${escapeHtml(item.advice?.summary || "")}</strong>
+                  <p>${escapeHtml(item.advice?.detail || "")}</p>
+                  <p class="position-footnote">${escapeHtml((item.actionPlan || []).slice(0, 2).join(" "))}</p>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("")
+    : `<div class="empty-state">${cloudEnabled() ? "你的在线模拟仓还是空的。填代码、股数和成本后，就能看到每日建议。" : "本地模拟仓还是空的。先录入一笔持仓，系统就会开始给出建议。"}</div>`;
+
+  document.querySelectorAll("#portfolioList button").forEach((button) => {
+    if (button.dataset.action === "analyze") {
+      button.addEventListener("click", async () => {
+        await openStockAnalysis(button.dataset.code);
+      });
+      return;
+    }
+    if (button.dataset.action === "fill-form") {
+      button.addEventListener("click", () => loadPortfolioForm(button.dataset.code));
+      return;
+    }
+    button.addEventListener("click", () => removePortfolioPosition(button.dataset.code));
+  });
+}
+
+function renderPortfolioTrades() {
+  $("#portfolioTrades").innerHTML = state.portfolioTrades.length
+    ? state.portfolioTrades
+        .map(
+          (item) => `
+            <article class="log-item">
+              <div class="log-item-head">
+                <strong>${escapeHtml(item.name)} ${item.code}</strong>
+                <span class="severity-pill severity-idle">${escapeHtml(item.action)}</span>
+              </div>
+              <p>股数 ${item.shares} · 价格 ${formatPrice(item.price)}</p>
+              <p>${escapeHtml(item.note || "模拟仓记录")}</p>
+              <p class="position-footnote">${new Date(item.createdAt).toLocaleString("zh-CN")}</p>
+            </article>
+          `
+        )
+        .join("")
+    : `<div class="empty-state">你后续每次调整模拟仓，最近的记录都会沉淀在这里，方便回看每日操作轨迹。</div>`;
+}
+
+function renderBriefing() {
+  const briefing = state.portfolioBriefing;
+  if (!briefing) {
+    $("#briefingPanel").innerHTML = `<div class="empty-state">录入模拟仓后，点“生成今日发言”，系统会结合市场环境和你的持仓给出今天的操作口径。</div>`;
+    return;
+  }
+
+  const indexTags = (briefing.market?.indexes || [])
+    .map((item) => `<span class="metric-pill">${escapeHtml(item.name)} ${formatPct(item.changePct)}</span>`)
+    .join("");
+
+  $("#briefingPanel").innerHTML = `
+    <article class="briefing-card">
+      <p class="section-label">今日投研发言</p>
+      <h3>${escapeHtml(briefing.headline || "今日环境")}</h3>
+      <p>${escapeHtml(briefing.overall || "")}</p>
+      <div class="tag-list">${indexTags}</div>
+    </article>
+    <div class="briefing-grid">
+      ${(briefing.scripts || [])
+        .map(
+          (item) => `
+            <article class="briefing-script">
+              <strong>${escapeHtml(item.name)} ${item.code}</strong>
+              <p>${escapeHtml(item.speech)}</p>
+            </article>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function refreshPortfolioInsights() {
+  if (!state.portfolio.length) {
+    state.portfolioInsights = [];
+    state.portfolioBriefing = null;
+    renderPortfolioSummary();
+    renderBriefing();
+    renderPortfolioList();
+    return;
+  }
+
+  try {
+    const items = state.portfolio.map((item) => ({
+      id: item.id || null,
+      code: item.code,
+      name: item.name,
+      shares: item.shares,
+      costBasis: item.costBasis,
+      notes: item.notes || ""
+    }));
+    const data = await fetchJson(`/api/portfolio/preview?items=${encodeURIComponent(JSON.stringify(items))}`);
+    state.portfolioInsights = data.positions || [];
+    renderPortfolioSummary();
+    renderBriefing();
+    renderPortfolioList();
+  } catch (error) {
+    $("#portfolioStatus").textContent = error.message;
+  }
+}
+
+async function generatePortfolioBriefing() {
+  if (!state.portfolio.length) {
+    $("#portfolioStatus").textContent = "先录入至少一笔模拟仓持仓，再生成今日发言。";
+    return;
+  }
+
+  $("#portfolioStatus").textContent = "正在生成今日发言...";
+
+  const items = state.portfolio.map((item) => ({
+    id: item.id || null,
+    code: item.code,
+    name: item.name,
+    shares: item.shares,
+    costBasis: item.costBasis,
+    notes: item.notes || ""
+  }));
+
+  const data = await fetchJson(`/api/portfolio/briefing?items=${encodeURIComponent(JSON.stringify(items))}`);
+  state.portfolioBriefing = data;
+  renderBriefing();
+  $("#portfolioStatus").textContent = "今日发言已生成，你现在在线打开网页就能直接看，不用再单独来问。";
+}
+
 function renderAll(data) {
   state.activeStock = data.stock.code;
   state.currentAnalysis = data;
@@ -666,6 +973,151 @@ async function fetchJson(url) {
     throw Object.assign(new Error(data.error || "请求失败"), { payload: data });
   }
   return data;
+}
+
+function findPortfolioPosition(code) {
+  return state.portfolio.find((item) => item.code === code);
+}
+
+function loadPortfolioForm(code) {
+  const item = findPortfolioPosition(code);
+  if (!item) return;
+  $("#portfolioCodeInput").value = item.code;
+  $("#portfolioSharesInput").value = item.shares;
+  $("#portfolioCostInput").value = item.costBasis;
+  $("#portfolioNotesInput").value = item.notes || "";
+  $("#portfolioStatus").textContent = `已载入 ${item.name}，你可以直接修改股数或成本后再次保存。`;
+}
+
+async function savePortfolioTrade(position, action, note) {
+  const trade = {
+    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    positionId: position.id || null,
+    code: position.code,
+    name: position.name,
+    action,
+    shares: Number(position.shares || 0),
+    price: Number(position.costBasis || 0),
+    note,
+    createdAt: new Date().toISOString()
+  };
+
+  if (cloudEnabled()) {
+    const { error } = await state.auth.client.from("portfolio_trades").insert({
+      user_id: state.auth.user.id,
+      position_id: trade.positionId,
+      code: trade.code,
+      name: trade.name,
+      action: trade.action,
+      shares: trade.shares,
+      price: trade.price,
+      note: trade.note
+    });
+    if (error) throw error;
+    return;
+  }
+
+  state.portfolioTrades.unshift(trade);
+  state.portfolioTrades = state.portfolioTrades.slice(0, 50);
+  persistLocalPortfolioTrades();
+}
+
+async function savePortfolioPosition(event) {
+  event.preventDefault();
+
+  const query = $("#portfolioCodeInput").value.trim();
+  const shares = Number($("#portfolioSharesInput").value);
+  const costBasis = Number($("#portfolioCostInput").value);
+  const notes = $("#portfolioNotesInput").value.trim();
+
+  if (!query) {
+    $("#portfolioStatus").textContent = "先输入股票代码或名称。";
+    return;
+  }
+  if (!Number.isFinite(shares) || shares <= 0) {
+    $("#portfolioStatus").textContent = "持股数量要大于 0。";
+    return;
+  }
+  if (!Number.isFinite(costBasis) || costBasis <= 0) {
+    $("#portfolioStatus").textContent = "持仓成本要大于 0。";
+    return;
+  }
+
+  let analysis;
+  try {
+    analysis = await fetchJson(`/api/strategy?query=${encodeURIComponent(query)}`);
+  } catch (error) {
+    $("#portfolioStatus").textContent = error.message;
+    return;
+  }
+
+  const existing = findPortfolioPosition(analysis.stock.code);
+  const position = {
+    id: existing?.id || null,
+    code: analysis.stock.code,
+    name: analysis.stock.name,
+    shares,
+    costBasis,
+    notes
+  };
+
+  if (cloudEnabled()) {
+    const { error } = await state.auth.client.from("portfolio_positions").upsert({
+      user_id: state.auth.user.id,
+      code: position.code,
+      name: position.name,
+      shares: position.shares,
+      cost_basis: position.costBasis,
+      notes: position.notes
+    }, {
+      onConflict: "user_id,code"
+    });
+    if (error) {
+      $("#portfolioStatus").textContent = error.message;
+      return;
+    }
+  } else {
+    state.portfolio = [position].concat(state.portfolio.filter((item) => item.code !== position.code));
+    persistLocalPortfolio();
+  }
+
+  await savePortfolioTrade(position, existing ? "adjust" : "snapshot", existing ? "更新模拟仓持仓" : "新增模拟仓持仓");
+
+  if (cloudEnabled()) {
+    await syncCloudState();
+  } else {
+    await refreshPortfolioInsights();
+    renderPortfolioTrades();
+  }
+
+  $("#portfolioStatus").textContent = `${position.name} 已保存到${cloudEnabled() ? "你的在线" : "本地"}模拟仓。`;
+}
+
+async function removePortfolioPosition(code) {
+  const existing = findPortfolioPosition(code);
+  if (!existing) return;
+
+  if (cloudEnabled()) {
+    const { error } = await state.auth.client.from("portfolio_positions").delete().eq("code", code);
+    if (error) {
+      $("#portfolioStatus").textContent = error.message;
+      return;
+    }
+  } else {
+    state.portfolio = state.portfolio.filter((item) => item.code !== code);
+    persistLocalPortfolio();
+  }
+
+  await savePortfolioTrade(existing, "close", "从模拟仓移除持仓");
+
+  if (cloudEnabled()) {
+    await syncCloudState();
+  } else {
+    await refreshPortfolioInsights();
+    renderPortfolioTrades();
+  }
+
+  $("#portfolioStatus").textContent = `${existing.name} 已从模拟仓移除。`;
 }
 
 function findWatch(code) {
@@ -693,6 +1145,10 @@ async function saveWatchToCloud(item) {
 }
 
 async function addCurrentToWatchlist() {
+  if (!opportunityAlertsEnabled()) {
+    setStatus("机会提醒已关闭，当前建议直接使用模拟仓和今日发言。");
+    return;
+  }
   let data = state.currentAnalysis;
   if (!data) {
     const query = state.activeStock || $("#stockQuery").value.trim();
@@ -734,6 +1190,7 @@ async function addCurrentToWatchlist() {
 }
 
 async function removeWatch(code) {
+  if (!opportunityAlertsEnabled()) return;
   if (cloudEnabled()) {
     const { error } = await state.auth.client.from("watchlists").delete().eq("code", code);
     if (error) {
@@ -750,6 +1207,7 @@ async function removeWatch(code) {
 }
 
 function mergeAlertResult(alert) {
+  if (!opportunityAlertsEnabled()) return;
   const existing = state.watchlist.find((item) => item.code === alert.code);
   if (existing) {
     existing.lastSeverity = alert.severity;
@@ -780,6 +1238,10 @@ function mergeAlertResult(alert) {
 }
 
 async function pollMonitor() {
+  if (!opportunityAlertsEnabled()) {
+    $("#monitorStatus").textContent = "机会提醒已关闭";
+    return;
+  }
   if (!state.watchlist.length) {
     renderAlertStrip();
     renderWatchlist();
@@ -818,6 +1280,14 @@ async function pollMonitor() {
 }
 
 function setMonitorEnabled(enabled) {
+  if (!opportunityAlertsEnabled()) {
+    if (state.monitorTimer) {
+      clearInterval(state.monitorTimer);
+      state.monitorTimer = null;
+    }
+    $("#monitorStatus").textContent = "机会提醒已关闭";
+    return;
+  }
   if (state.monitorTimer) {
     clearInterval(state.monitorTimer);
     state.monitorTimer = null;
@@ -902,6 +1372,19 @@ function bindWatchlist() {
   $("#monitorToggle").addEventListener("change", (event) => setMonitorEnabled(event.target.checked));
 }
 
+function bindPortfolio() {
+  $("#portfolioForm").addEventListener("submit", (event) => {
+    savePortfolioPosition(event).catch((error) => {
+      $("#portfolioStatus").textContent = error.message;
+    });
+  });
+  $("#generateBriefingButton").addEventListener("click", () => {
+    generatePortfolioBriefing().catch((error) => {
+      $("#portfolioStatus").textContent = error.message;
+    });
+  });
+}
+
 function bindAuth() {
   $("#signInGoogleButton").addEventListener("click", () => signIn("google"));
   $("#signInGithubButton").addEventListener("click", () => signIn("github"));
@@ -928,13 +1411,18 @@ async function init() {
     renderWatchlist();
     renderOpportunityLog();
     renderAlertStrip();
+    renderBriefing();
+    renderPortfolioTrades();
     renderChannels();
     bindSearch();
     bindWatchlist();
+    bindPortfolio();
     bindAuth();
+    await refreshPortfolioInsights();
     await loadRuntimeConfig();
     await initSupabase();
     await syncCloudState();
+    $("#opportunitySection").hidden = !opportunityAlertsEnabled();
     renderAuth();
     await initNotifications();
     // await loadStocks(); // disabled - no stock pool quick picks

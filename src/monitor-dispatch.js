@@ -90,6 +90,14 @@ function isDedupeBlocked(previousSignalAt) {
 }
 
 async function runAlertDispatch() {
+  if (process.env.OPPORTUNITY_ALERTS_ENABLED !== "true") {
+    return {
+      ok: true,
+      disabled: true,
+      message: "机会提醒已关闭"
+    };
+  }
+
   const market = getChinaTradingWindowState();
   if (!market.open) {
     return {

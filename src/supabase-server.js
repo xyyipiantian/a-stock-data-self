@@ -5,7 +5,8 @@ function getPublicRuntimeConfig() {
     supabaseUrl: process.env.SUPABASE_URL || "",
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
     authEnabled: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
-    oauthProviders: ["google", "github"]
+    oauthProviders: ["google", "github"],
+    opportunityAlertsEnabled: process.env.OPPORTUNITY_ALERTS_ENABLED === "true"
   };
 }
 

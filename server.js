@@ -5,6 +5,8 @@ const { URL } = require("url");
 
 const { analyzeStock, findStock, listStocks, monitorStocks, searchStocks } = require("./src/strategy-engine");
 const { runAlertDispatch } = require("./src/monitor-dispatch");
+const { enrichPortfolioPosition, summarizePortfolio } = require("./src/portfolio-advice");
+const { buildPortfolioBriefing } = require("./src/market-briefing");
 const { getPublicRuntimeConfig } = require("./src/supabase-server");
 
 const rootDir = __dirname;
@@ -115,6 +117,70 @@ async function handleApi(reqUrl, res) {
 
   if (reqUrl.pathname === "/api/runtime-config") {
     jsonResponse(res, 200, getPublicRuntimeConfig());
+    return true;
+  }
+
+  if (reqUrl.pathname === "/api/portfolio/preview") {
+    const raw = reqUrl.searchParams.get("items") || "[]";
+    let items;
+    try {
+      items = JSON.parse(raw);
+    } catch {
+      jsonResponse(res, 400, { error: "模拟仓参数格式不正确" });
+      return true;
+    }
+
+    const positions = await Promise.all(
+      (Array.isArray(items) ? items : []).map(async (item) => {
+        const stock = await findStock(item.code || item.query || "");
+        if (!stock) {
+          return {
+            id: item.id || null,
+            code: item.code || "",
+            name: item.name || item.code || "",
+            shares: Number(item.shares || 0),
+            costBasis: Number(item.costBasis || 0),
+            notes: item.notes || "",
+            error: "未找到匹配股票"
+          };
+        }
+
+        return enrichPortfolioPosition(
+          {
+            id: item.id || null,
+            shares: item.shares,
+            costBasis: item.costBasis,
+            notes: item.notes
+          },
+          analyzeStock(stock)
+        );
+      })
+    );
+
+    const validPositions = positions.filter((item) => !item.error);
+    jsonResponse(res, 200, {
+      positions,
+      summary: summarizePortfolio(validPositions),
+      updatedAt: new Date().toISOString()
+    });
+    return true;
+  }
+
+  if (reqUrl.pathname === "/api/portfolio/briefing") {
+    const raw = reqUrl.searchParams.get("items") || "[]";
+    let items;
+    try {
+      items = JSON.parse(raw);
+    } catch {
+      jsonResponse(res, 400, { error: "投研发言参数格式不正确" });
+      return true;
+    }
+
+    const briefing = await buildPortfolioBriefing(items);
+    jsonResponse(res, 200, {
+      ...briefing,
+      updatedAt: new Date().toISOString()
+    });
     return true;
   }
 

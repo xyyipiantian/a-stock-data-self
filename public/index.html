@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Alpha Lens 投研面板</title>
-    <link rel="stylesheet" href="/styles.css?v=20260616a" />
+    <link rel="stylesheet" href="/styles.css?v=20260622c" />
   </head>
   <body>
   <header class="top-bar">
@@ -147,6 +147,53 @@
         <div class="positions-grid" id="positionsGrid"></div>
       </section>
 
+      <section class="content-grid lower-grid opportunity-section" id="opportunitySection">
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">在线模拟仓</p>
+              <h3>持仓跟踪与每日建议</h3>
+            </div>
+          </div>
+          <form id="portfolioForm" class="portfolio-form">
+            <label class="channel-field">
+              <span>股票代码或名称</span>
+              <input id="portfolioCodeInput" type="text" placeholder="例如 002639 / 雪人集团" />
+            </label>
+            <label class="channel-field">
+              <span>持股数量</span>
+              <input id="portfolioSharesInput" type="number" min="0" step="100" placeholder="例如 1800" />
+            </label>
+            <label class="channel-field">
+              <span>持仓成本</span>
+              <input id="portfolioCostInput" type="number" min="0" step="0.01" placeholder="例如 17.4" />
+            </label>
+            <label class="channel-field">
+              <span>备注</span>
+              <input id="portfolioNotesInput" type="text" placeholder="例如 满仓 / 波段 / 长线观察" />
+            </label>
+            <div class="channel-actions">
+              <button class="primary-button compact" id="savePortfolioButton" type="submit">保存到模拟仓</button>
+              <button class="secondary-button compact" id="generateBriefingButton" type="button">生成今日发言</button>
+              <p id="portfolioStatus">登录后持仓会保存在你自己的账号下；未登录时保存在当前浏览器。</p>
+            </div>
+          </form>
+          <div class="portfolio-summary" id="portfolioSummary"></div>
+          <div class="briefing-panel" id="briefingPanel"></div>
+          <div class="portfolio-list" id="portfolioList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">仓位轨迹</p>
+              <h3>最近调整记录</h3>
+            </div>
+          </div>
+          <div class="opportunity-log" id="portfolioTrades"></div>
+        </section>
+      </section>
+
       <section class="content-grid lower-grid">
         <section class="panel">
           <div class="panel-heading">
@@ -229,6 +276,6 @@
       </section>
     </main>
 
-    <script type="module" src="/app.js?v=20260616a"></script>
+    <script type="module" src="/app.js?v=20260622c"></script>
   </body>
 </html>

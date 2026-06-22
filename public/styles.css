@@ -601,6 +601,134 @@ dt {
   gap: 16px;
 }
 
+.portfolio-form,
+.portfolio-summary,
+.portfolio-list,
+.briefing-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.portfolio-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.portfolio-summary {
+  margin-top: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.portfolio-summary-card,
+.portfolio-item {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+}
+
+.portfolio-summary-card {
+  padding: 16px 18px;
+}
+
+.portfolio-summary-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.portfolio-list {
+  margin-top: 16px;
+}
+
+.briefing-panel {
+  margin-top: 18px;
+}
+
+.briefing-card,
+.briefing-script {
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.briefing-card {
+  padding: 18px;
+}
+
+.briefing-script {
+  padding: 16px 18px;
+}
+
+.briefing-card p,
+.briefing-script p {
+  color: var(--ink-700);
+  line-height: 1.75;
+}
+
+.briefing-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.portfolio-item {
+  padding: 18px;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 16px;
+}
+
+.portfolio-item-head,
+.portfolio-price-row,
+.portfolio-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.portfolio-price-row {
+  margin-top: 14px;
+  align-items: baseline;
+}
+
+.portfolio-price-row strong {
+  font-size: 30px;
+}
+
+.portfolio-advice {
+  padding: 14px 16px;
+  border-radius: 16px;
+  line-height: 1.7;
+}
+
+.portfolio-advice.positive {
+  background: var(--green-soft);
+}
+
+.portfolio-advice.neutral,
+.portfolio-advice.watch {
+  background: var(--blue-soft);
+}
+
+.portfolio-advice.defensive {
+  background: var(--amber-soft);
+}
+
+.portfolio-actions {
+  margin-top: 14px;
+}
+
+.portfolio-actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(39, 70, 111, 0.06);
+  color: var(--ink-800);
+}
+
 .channel-field {
   display: grid;
   gap: 8px;
@@ -760,6 +888,9 @@ dt {
   .auth-panel,
   .auth-actions,
   .channel-actions,
+  .portfolio-item-head,
+  .portfolio-price-row,
+  .portfolio-actions,
   .stock-heading,
   .section-head,
   .panel-heading,
@@ -773,7 +904,10 @@ dt {
   .content-grid,
   .lower-grid,
   .positions-grid,
-  .thesis-grid {
+  .thesis-grid,
+  .portfolio-form,
+  .portfolio-summary,
+  .portfolio-grid {
     grid-template-columns: 1fr;
   }
 
