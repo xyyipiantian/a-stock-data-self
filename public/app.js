@@ -876,14 +876,18 @@ function renderPortfolioList() {
                         <strong>${escapeHtml(item.advice?.label || "观察")}</strong>
                       </div>
                     </div>
+                    <div class="portfolio-adjust-controls">
+                      <input type="number" min="1" step="100" value="100" data-adjust-input="${item.code}" placeholder="调整股数" />
+                      <button class="primary-adjust" data-action="buy-shares" data-code="${item.code}">加仓</button>
+                      <button class="primary-adjust" data-action="sell-shares" data-code="${item.code}">减仓</button>
+                      <button data-action="clear-position" data-code="${item.code}">清仓</button>
+                    </div>
                     <div class="portfolio-actions">
-                      <button class="primary-adjust" data-action="buy-100" data-code="${item.code}">加仓 100 股</button>
-                      <button class="primary-adjust" data-action="sell-100" data-code="${item.code}">减仓 100 股</button>
                       <button data-action="fill-form" data-code="${item.code}">载入到表单</button>
                       <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
                       <button data-action="remove-portfolio" data-code="${item.code}">删除持仓</button>
                     </div>
-                </div>
+                  </div>
                 <div class="portfolio-advice ${escapeHtml(item.advice?.level || "neutral")}">
                   <strong>${escapeHtml(item.advice?.summary || "")}</strong>
                   <p>${escapeHtml(item.advice?.detail || "")}</p>
@@ -905,12 +909,16 @@ function renderPortfolioList() {
       });
       return;
     }
-    if (button.dataset.action === "buy-100") {
-      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, 100));
+    if (button.dataset.action === "buy-shares") {
+      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, "buy"));
       return;
     }
-    if (button.dataset.action === "sell-100") {
-      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, -100));
+    if (button.dataset.action === "sell-shares") {
+      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, "sell"));
+      return;
+    }
+    if (button.dataset.action === "clear-position") {
+      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, "clear"));
       return;
     }
     if (button.dataset.action === "fill-form") {
@@ -922,16 +930,7 @@ function renderPortfolioList() {
 }
 
 function renderPortfolioTrades() {
-  const latest = state.portfolioTrades[0];
-  $("#portfolioTrades").innerHTML = `
-    <article class="portfolio-op-card">
-      <strong>你现在可以这样操作模拟仓</strong>
-      <p>每只持仓卡片上都支持直接 <code>加仓 100 股</code>、<code>减仓 100 股</code> 和 <code>删除持仓</code>。如果你想精细调整，就先点“载入到表单”，再手动修改股数和成本后保存。</p>
-      <p>规则约定：
-      加仓会按当前价格重新计算持仓均价；减仓默认只减少股数，不主动改历史持仓成本；减到 0 会自动视为清仓。</p>
-      <p>${latest ? `最近一次动作：${escapeHtml(latest.name)} ${latest.code} · ${escapeHtml(latest.action)} · ${new Date(latest.createdAt).toLocaleString("zh-CN")}` : "你保存第一笔持仓后，系统就会开始记录最近一次仓位动作。"}</p>
-    </article>
-  `;
+  return;
 }
 
 function renderBriefing() {
@@ -1127,13 +1126,20 @@ async function persistPortfolioPosition(position) {
   }
 }
 
-async function quickAdjustPortfolio(code, deltaShares) {
+async function quickAdjustPortfolio(code, mode) {
   const existing = findPortfolioPosition(code);
   const insight = state.portfolioInsights.find((item) => item.code === code);
   if (!existing || !insight) {
     $("#portfolioStatus").textContent = "先等待持仓数据加载完成，再进行加减仓。";
     return;
   }
+
+  const adjustInput = document.querySelector(`[data-adjust-input="${code}"]`);
+  const adjustShares = Math.max(1, Number(adjustInput?.value || 0));
+  const deltaShares =
+    mode === "buy" ? adjustShares :
+    mode === "sell" ? -adjustShares :
+    -Number(existing.shares || 0);
 
   const nextShares = Math.max(0, Number(existing.shares || 0) + deltaShares);
   if (nextShares === 0) {
