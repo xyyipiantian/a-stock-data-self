@@ -662,6 +662,11 @@ dt {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.portfolio-ops-panel {
+  display: grid;
+  gap: 14px;
+}
+
 .briefing-panel {
   margin-top: 18px;
 }
@@ -776,6 +781,23 @@ dt {
   border: 1px solid var(--line);
   background: rgba(39, 70, 111, 0.06);
   color: var(--ink-800);
+}
+
+.portfolio-actions .primary-adjust {
+  background: rgba(36, 95, 168, 0.12);
+  color: var(--blue);
+}
+
+.portfolio-op-card {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+}
+
+.portfolio-op-card p {
+  color: var(--ink-700);
+  line-height: 1.7;
 }
 
 .channel-field {

@@ -877,10 +877,12 @@ function renderPortfolioList() {
                       </div>
                     </div>
                     <div class="portfolio-actions">
+                      <button class="primary-adjust" data-action="buy-100" data-code="${item.code}">加仓 100 股</button>
+                      <button class="primary-adjust" data-action="sell-100" data-code="${item.code}">减仓 100 股</button>
                       <button data-action="fill-form" data-code="${item.code}">载入到表单</button>
                       <button data-action="analyze" data-code="${item.code}">查看实时策略</button>
                       <button data-action="remove-portfolio" data-code="${item.code}">删除持仓</button>
-                  </div>
+                    </div>
                 </div>
                 <div class="portfolio-advice ${escapeHtml(item.advice?.level || "neutral")}">
                   <strong>${escapeHtml(item.advice?.summary || "")}</strong>
@@ -903,6 +905,14 @@ function renderPortfolioList() {
       });
       return;
     }
+    if (button.dataset.action === "buy-100") {
+      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, 100));
+      return;
+    }
+    if (button.dataset.action === "sell-100") {
+      button.addEventListener("click", () => quickAdjustPortfolio(button.dataset.code, -100));
+      return;
+    }
     if (button.dataset.action === "fill-form") {
       button.addEventListener("click", () => loadPortfolioForm(button.dataset.code));
       return;
@@ -912,23 +922,16 @@ function renderPortfolioList() {
 }
 
 function renderPortfolioTrades() {
-  $("#portfolioTrades").innerHTML = state.portfolioTrades.length
-    ? state.portfolioTrades
-        .map(
-          (item) => `
-            <article class="log-item">
-              <div class="log-item-head">
-                <strong>${escapeHtml(item.name)} ${item.code}</strong>
-                <span class="severity-pill severity-idle">${escapeHtml(item.action)}</span>
-              </div>
-              <p>股数 ${item.shares} · 价格 ${formatPrice(item.price)}</p>
-              <p>${escapeHtml(item.note || "模拟仓记录")}</p>
-              <p class="position-footnote">${new Date(item.createdAt).toLocaleString("zh-CN")}</p>
-            </article>
-          `
-        )
-        .join("")
-    : `<div class="empty-state">你后续每次调整模拟仓，最近的记录都会沉淀在这里，方便回看每日操作轨迹。</div>`;
+  const latest = state.portfolioTrades[0];
+  $("#portfolioTrades").innerHTML = `
+    <article class="portfolio-op-card">
+      <strong>你现在可以这样操作模拟仓</strong>
+      <p>每只持仓卡片上都支持直接 <code>加仓 100 股</code>、<code>减仓 100 股</code> 和 <code>删除持仓</code>。如果你想精细调整，就先点“载入到表单”，再手动修改股数和成本后保存。</p>
+      <p>规则约定：
+      加仓会按当前价格重新计算持仓均价；减仓默认只减少股数，不主动改历史持仓成本；减到 0 会自动视为清仓。</p>
+      <p>${latest ? `最近一次动作：${escapeHtml(latest.name)} ${latest.code} · ${escapeHtml(latest.action)} · ${new Date(latest.createdAt).toLocaleString("zh-CN")}` : "你保存第一笔持仓后，系统就会开始记录最近一次仓位动作。"}</p>
+    </article>
+  `;
 }
 
 function renderBriefing() {
@@ -989,6 +992,27 @@ async function refreshPortfolioInsights() {
     renderBriefing();
     renderPortfolioList();
   } catch (error) {
+    state.portfolioInsights = state.portfolio.map((item) => ({
+      ...item,
+      currentPrice: 0,
+      marketValue: 0,
+      costValue: Number(item.shares || 0) * Number(item.costBasis || 0),
+      pnlAmount: 0,
+      pnlPct: 0,
+      totalScore: 0,
+      supportPrice: 0,
+      resistancePrice: 0,
+      stance: "待同步",
+      advice: {
+        level: "neutral",
+        label: "等待同步",
+        summary: "持仓已保存，但实时分析暂时没有返回，稍后会自动补齐。",
+        detail: error.message
+      },
+      actionPlan: []
+    }));
+    renderPortfolioSummary();
+    renderPortfolioList();
     $("#portfolioStatus").textContent = error.message;
   }
 }
@@ -1083,6 +1107,70 @@ async function savePortfolioTrade(position, action, note) {
   persistLocalPortfolioTrades();
 }
 
+async function persistPortfolioPosition(position) {
+  state.portfolio = [position].concat(state.portfolio.filter((item) => item.code !== position.code));
+
+  if (cloudEnabled()) {
+    const { error } = await state.auth.client.from("portfolio_positions").upsert({
+      user_id: state.auth.user.id,
+      code: position.code,
+      name: position.name,
+      shares: position.shares,
+      cost_basis: position.costBasis,
+      notes: position.notes || ""
+    }, {
+      onConflict: "user_id,code"
+    });
+    if (error) throw error;
+  } else {
+    persistLocalPortfolio();
+  }
+}
+
+async function quickAdjustPortfolio(code, deltaShares) {
+  const existing = findPortfolioPosition(code);
+  const insight = state.portfolioInsights.find((item) => item.code === code);
+  if (!existing || !insight) {
+    $("#portfolioStatus").textContent = "先等待持仓数据加载完成，再进行加减仓。";
+    return;
+  }
+
+  const nextShares = Math.max(0, Number(existing.shares || 0) + deltaShares);
+  if (nextShares === 0) {
+    await removePortfolioPosition(code);
+    return;
+  }
+
+  let nextCostBasis = Number(existing.costBasis || 0);
+  if (deltaShares > 0) {
+    const currentPrice = Number(insight.currentPrice || existing.costBasis || 0);
+    nextCostBasis = ((Number(existing.shares || 0) * Number(existing.costBasis || 0)) + (deltaShares * currentPrice)) / nextShares;
+  }
+
+  const updated = {
+    ...existing,
+    shares: nextShares,
+    costBasis: Math.round(nextCostBasis * 100) / 100
+  };
+
+  await persistPortfolioPosition(updated);
+  await savePortfolioTrade(
+    updated,
+    "adjust",
+    deltaShares > 0 ? `快捷加仓 ${deltaShares} 股` : `快捷减仓 ${Math.abs(deltaShares)} 股`
+  );
+
+  if (cloudEnabled()) {
+    await syncCloudState();
+  } else {
+    await refreshPortfolioInsights();
+    renderPortfolioTrades();
+  }
+
+  $("#portfolioStatus").textContent = `${updated.name} 已${deltaShares > 0 ? "加仓" : "减仓"} ${Math.abs(deltaShares)} 股。`;
+  generatePortfolioBriefing().catch(() => {});
+}
+
 async function savePortfolioPosition(event) {
   event.preventDefault();
 
@@ -1123,24 +1211,11 @@ async function savePortfolioPosition(event) {
     notes
   };
 
-  if (cloudEnabled()) {
-    const { error } = await state.auth.client.from("portfolio_positions").upsert({
-      user_id: state.auth.user.id,
-      code: position.code,
-      name: position.name,
-      shares: position.shares,
-      cost_basis: position.costBasis,
-      notes: position.notes
-    }, {
-      onConflict: "user_id,code"
-    });
-    if (error) {
-      $("#portfolioStatus").textContent = error.message;
-      return;
-    }
-  } else {
-    state.portfolio = [position].concat(state.portfolio.filter((item) => item.code !== position.code));
-    persistLocalPortfolio();
+  try {
+    await persistPortfolioPosition(position);
+  } catch (error) {
+    $("#portfolioStatus").textContent = error.message;
+    return;
   }
 
   await savePortfolioTrade(position, existing ? "adjust" : "snapshot", existing ? "更新模拟仓持仓" : "新增模拟仓持仓");
